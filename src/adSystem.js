@@ -287,3 +287,4 @@ export async function preloadAds() {
   }
 }
 
+export { AdSystem };

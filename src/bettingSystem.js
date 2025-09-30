@@ -274,3 +274,4 @@ export function getNumberColor(number) {
   return 'green';
 }
 
+export { BettingManager, BET_TYPES, BET_AMOUNTS, PAYOUTS };

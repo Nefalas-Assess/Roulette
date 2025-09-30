@@ -1,237 +1,279 @@
-/* Roulette Wheel Animation Styles */
+/* RouletteWheel.css - Styles pour la roue de roulette */
 
-.roulette-container {
-  position: relative;
-  margin: 0 auto;
+.roulette-wheel-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
 }
 
-.roulette-rim {
+.wheel-wrapper {
   position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: linear-gradient(45deg, #d4af37, #ffd700, #b8860b);
-  border: 8px solid #8b7355;
-  box-shadow: 
-    0 0 20px rgba(0, 0, 0, 0.3),
-    inset 0 0 20px rgba(0, 0, 0, 0.2);
+  width: 350px;
+  height: 350px;
   display: flex;
-  align-items: center;
   justify-content: center;
-}
-
-.roulette-wheel {
-  position: absolute;
-  width: 85%;
-  height: 85%;
-  border-radius: 50%;
-  background: radial-gradient(circle, #2d1810 0%, #1a0f08 100%);
-  border: 3px solid #8b7355;
-  transform-origin: center;
-}
-
-.wheel-number {
-  position: absolute;
-  width: 30px;
-  height: 40px;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  left: 50%;
-  top: 50%;
-  margin-left: -15px;
-  margin-top: -20px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.wheel-number.red {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  color: white;
-}
-
-.wheel-number.black {
-  background: linear-gradient(135deg, #1f2937, #111827);
-  color: white;
-}
-
-.wheel-number.green {
-  background: linear-gradient(135deg, #059669, #047857);
-  color: white;
-}
-
-.number-text {
-  font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  font-family: 'Arial', sans-serif;
-}
-
-.ball-track {
+.wheel-indicator {
   position: absolute;
-  width: 95%;
-  height: 95%;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  top: 50%;
+  top: -20px;
   left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.roulette-ball {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform-origin: center;
-  width: 0;
-  height: 0;
-}
-
-.ball {
-  width: 12px;
-  height: 12px;
-  background: radial-gradient(circle at 30% 30%, #ffffff, #e5e5e5, #cccccc);
-  border-radius: 50%;
-  box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.3),
-    inset 1px 1px 2px rgba(255, 255, 255, 0.8);
-  transform: translate(-50%, -50%);
-  position: relative;
+  transform: translateX(-50%);
+  font-size: 2rem;
+  color: #ffd700;
   z-index: 10;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-5px);
+  }
+}
+
+.wheel {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2c2c2c 0%, #1a1a1a 100%);
+  box-shadow: 
+    0 0 30px rgba(0, 0, 0, 0.5),
+    inset 0 0 20px rgba(0, 0, 0, 0.8),
+    0 0 50px rgba(255, 215, 0, 0.2);
+  border: 5px solid #ffd700;
+}
+
+.wheel.spinning {
+  animation: spin-glow 3s ease-out;
+}
+
+@keyframes spin-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 30px rgba(0, 0, 0, 0.5),
+      inset 0 0 20px rgba(0, 0, 0, 0.8),
+      0 0 50px rgba(255, 215, 0, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 40px rgba(255, 215, 0, 0.6),
+      inset 0 0 30px rgba(255, 215, 0, 0.3),
+      0 0 80px rgba(255, 215, 0, 0.5);
+  }
 }
 
 .wheel-center {
   position: absolute;
-  width: 25%;
-  height: 25%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  background: radial-gradient(circle, #8b7355, #6b5b47, #4a3f35);
-  border: 3px solid #d4af37;
+  background: radial-gradient(circle, #4a4a4a 0%, #2c2c2c 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 5;
   box-shadow: 
-    0 0 15px rgba(0, 0, 0, 0.4),
-    inset 0 0 10px rgba(0, 0, 0, 0.3);
+    0 0 15px rgba(0, 0, 0, 0.8),
+    inset 0 0 10px rgba(255, 255, 255, 0.1);
+  border: 3px solid #ffd700;
 }
 
-.center-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: radial-gradient(circle, #2d1810, #1a0f08);
-  border: 2px solid #d4af37;
+.wheel-logo {
+  font-size: 2rem;
+  animation: pulse 2s infinite;
 }
 
-.winning-number {
-  font-size: 24px;
-  font-weight: bold;
-  color: #d4af37;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-}
-
-.question-mark {
-  font-size: 32px;
-  font-weight: bold;
-  color: #d4af37;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-}
-
-.wheel-pointer {
-  position: absolute;
-  top: -5px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 20px solid #d4af37;
-  z-index: 15;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-/* Animation classes for different phases */
-.roulette-wheel.spinning {
-  animation: wheelSpin 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.roulette-ball.spinning {
-  animation: ballSpin 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-@keyframes wheelSpin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(1800deg); /* 5 full rotations */
-  }
-}
-
-@keyframes ballSpin {
-  from {
-    transform: rotate(0deg) translateX(var(--ball-radius));
-  }
-  to {
-    transform: rotate(-2880deg) translateX(var(--ball-radius)); /* 8 full rotations opposite direction */
-  }
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .wheel-number {
-    width: 25px;
-    height: 35px;
-    margin-left: -12.5px;
-    margin-top: -17.5px;
-  }
-  
-  .number-text {
-    font-size: 12px;
-  }
-  
-  .ball {
-    width: 10px;
-    height: 10px;
-  }
-  
-  .winning-number {
-    font-size: 20px;
-  }
-  
-  .question-mark {
-    font-size: 28px;
-  }
-}
-
-/* Hover effects */
-.roulette-container:hover .roulette-rim {
-  box-shadow: 
-    0 0 30px rgba(212, 175, 55, 0.4),
-    inset 0 0 20px rgba(0, 0, 0, 0.2);
-}
-
-/* Winning number highlight */
-.wheel-number.winning {
-  animation: winningGlow 2s ease-in-out infinite alternate;
-  z-index: 10;
-}
-
-@keyframes winningGlow {
-  from {
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+@keyframes pulse {
+  0%, 100% {
     transform: scale(1);
   }
-  to {
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+  50% {
     transform: scale(1.1);
   }
 }
 
+.wheel-segment {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.8rem;
+  transform-origin: center 150px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.wheel-segment.red {
+  background: linear-gradient(135deg, #dc143c 0%, #a00000 100%);
+  color: #ffffff;
+}
+
+.wheel-segment.black {
+  background: linear-gradient(135deg, #333333 0%, #000000 100%);
+  color: #ffffff;
+}
+
+.wheel-segment.green {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  color: #ffffff;
+}
+
+.wheel-number {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.result-display {
+  display: flex;
+  justify-content: center;
+  animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.result-bubble {
+  padding: 1.5rem 2.5rem;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  border: 3px solid rgba(255, 255, 255, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  animation: pop 0.3s ease;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.result-bubble.red {
+  background: linear-gradient(135deg, #dc143c 0%, #a00000 100%);
+}
+
+.result-bubble.black {
+  background: linear-gradient(135deg, #333333 0%, #000000 100%);
+}
+
+.result-bubble.green {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.result-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 1px;
+}
+
+.result-value {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wheel-wrapper {
+    width: 280px;
+    height: 280px;
+  }
+  
+  .wheel {
+    width: 250px;
+    height: 250px;
+  }
+  
+  .wheel-center {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .wheel-logo {
+    font-size: 1.5rem;
+  }
+  
+  .wheel-segment {
+    width: 25px;
+    height: 25px;
+    font-size: 0.7rem;
+    transform-origin: center 125px;
+  }
+  
+  .result-value {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .roulette-wheel-container {
+    padding: 1rem;
+  }
+  
+  .wheel-wrapper {
+    width: 220px;
+    height: 220px;
+  }
+  
+  .wheel {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .wheel-center {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .wheel-logo {
+    font-size: 1.2rem;
+  }
+  
+  .wheel-segment {
+    width: 20px;
+    height: 20px;
+    font-size: 0.6rem;
+    transform-origin: center 100px;
+  }
+  
+  .result-bubble {
+    padding: 1rem 1.5rem;
+  }
+  
+  .result-value {
+    font-size: 2rem;
+  }
+}

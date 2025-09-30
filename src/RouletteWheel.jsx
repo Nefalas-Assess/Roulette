@@ -1,183 +1,98 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import './RouletteWheel.css';
 
-// American roulette wheel layout (clockwise from 0)
-const WHEEL_NUMBERS = [
-  0, 28, 9, 26, 30, 11, 7, 20, 32, 17, 5, 22, 34, 15, 3, 24, 36, 13, 1, '00',
-  27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2
-];
-
-// Colors for each number
-const getNumberColor = (number) => {
-  if (number === 0 || number === '00') return 'green';
-  const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-  return redNumbers.includes(number) ? 'red' : 'black';
-};
-
-const RouletteWheel = ({ 
-  isSpinning, 
-  winningNumber, 
-  onSpinComplete,
-  size = 300 
-}) => {
+const RouletteWheel = ({ isSpinning, result, winningNumber }) => {
   const [rotation, setRotation] = useState(0);
-  const [ballRotation, setBallRotation] = useState(0);
-  const [animationPhase, setAnimationPhase] = useState('idle'); // idle, spinning, slowing, stopped
-  const wheelRef = useRef(null);
-  const ballRef = useRef(null);
+  const [displayNumber, setDisplayNumber] = useState(null);
 
-  // Calculate the angle for a specific number on the wheel
-  const getNumberAngle = (number) => {
-    const index = WHEEL_NUMBERS.indexOf(number);
-    return (index * (360 / WHEEL_NUMBERS.length)) + (360 / WHEEL_NUMBERS.length / 2);
+  // Numéros de la roulette américaine dans l'ordre de la roue
+  const wheelNumbers = [
+    0, 28, 9, 26, 30, 11, 7, 20, 32, 17, 5, 22, 34, 15, 3, 24, 36, 13, 1,
+    '00', 27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2
+  ];
+
+  // Couleurs pour chaque numéro
+  const getNumberColor = (num) => {
+    if (num === 0 || num === '00') return 'green';
+    const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+    return redNumbers.includes(num) ? 'red' : 'black';
   };
 
+  // Effet pour l'animation du spin
   useEffect(() => {
-    if (isSpinning && winningNumber !== null) {
-      startSpinAnimation();
+    if (isSpinning && result) {
+      // Calculer l'angle cible basé sur le numéro gagnant
+      const targetIndex = wheelNumbers.indexOf(result.number);
+      const degreesPerNumber = 360 / wheelNumbers.length;
+      const targetAngle = targetIndex * degreesPerNumber;
+      
+      // Ajouter plusieurs rotations complètes pour l'effet
+      const extraRotations = 1440; // 4 tours complets
+      const finalRotation = extraRotations + (360 - targetAngle);
+      
+      setRotation(finalRotation);
+      setDisplayNumber(null);
+      
+      // Afficher le numéro gagnant après l'animation
+      setTimeout(() => {
+        setDisplayNumber(result.number);
+      }, 3000);
     }
-  }, [isSpinning, winningNumber]);
+  }, [isSpinning, result]);
 
-  const startSpinAnimation = () => {
-    setAnimationPhase('spinning');
-    
-    // Calculate target angle for winning number
-    const targetAngle = getNumberAngle(winningNumber);
-    
-    // Add multiple full rotations for dramatic effect
-    const fullRotations = 5 + Math.random() * 3; // 5-8 full rotations
-    const finalWheelRotation = (fullRotations * 360) + (360 - targetAngle);
-    
-    // Ball rotates in opposite direction and more rotations
-    const ballRotations = 8 + Math.random() * 4; // 8-12 rotations
-    const finalBallRotation = (ballRotations * 360) + targetAngle;
-
-    // Phase 1: Fast spinning (1.5 seconds)
-    setTimeout(() => {
-      setRotation(prev => prev + (fullRotations * 360 * 0.6));
-      setBallRotation(prev => prev - (ballRotations * 360 * 0.6));
-    }, 100);
-
-    // Phase 2: Slowing down (1 second)
-    setTimeout(() => {
-      setAnimationPhase('slowing');
-      setRotation(prev => prev + (fullRotations * 360 * 0.3));
-      setBallRotation(prev => prev - (ballRotations * 360 * 0.3));
-    }, 1600);
-
-    // Phase 3: Final positioning (0.5 seconds)
-    setTimeout(() => {
-      setAnimationPhase('stopped');
-      setRotation(finalWheelRotation);
-      setBallRotation(finalBallRotation);
-    }, 2600);
-
-    // Complete animation
-    setTimeout(() => {
-      setAnimationPhase('idle');
-      if (onSpinComplete) {
-        onSpinComplete();
-      }
-    }, 3100);
-  };
-
-  const getTransitionStyle = () => {
-    switch (animationPhase) {
-      case 'spinning':
-        return 'transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-      case 'slowing':
-        return 'transform 1s cubic-bezier(0.55, 0.085, 0.68, 0.53)';
-      case 'stopped':
-        return 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
-      default:
-        return 'none';
-    }
-  };
-
-  const getBallTransitionStyle = () => {
-    switch (animationPhase) {
-      case 'spinning':
-        return 'transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-      case 'slowing':
-        return 'transform 1s cubic-bezier(0.55, 0.085, 0.68, 0.53)';
-      case 'stopped':
-        return 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
-      default:
-        return 'none';
-    }
-  };
+  // Utiliser winningNumber comme fallback si result n'est pas disponible
+  const currentNumber = displayNumber !== null ? displayNumber : winningNumber;
 
   return (
-    <div className="roulette-container" style={{ width: size, height: size }}>
-      {/* Outer rim */}
-      <div className="roulette-rim">
-        {/* Wheel with numbers */}
+    <div className="roulette-wheel-container">
+      <div className="wheel-wrapper">
+        {/* Indicateur fixe (flèche pointant vers le haut) */}
+        <div className="wheel-indicator">▼</div>
+        
+        {/* La roue qui tourne */}
         <div 
-          ref={wheelRef}
-          className="roulette-wheel"
-          style={{
+          className={`wheel ${isSpinning ? 'spinning' : ''}`}
+          style={{ 
             transform: `rotate(${rotation}deg)`,
-            transition: getTransitionStyle()
+            transition: isSpinning ? 'transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none'
           }}
         >
-          {WHEEL_NUMBERS.map((number, index) => {
-            const angle = (index * (360 / WHEEL_NUMBERS.length));
-            const color = getNumberColor(number);
+          {/* Cercle central */}
+          <div className="wheel-center">
+            <div className="wheel-logo">🎰</div>
+          </div>
+          
+          {/* Segments de la roue */}
+          {wheelNumbers.map((num, index) => {
+            const angle = (360 / wheelNumbers.length) * index;
+            const color = getNumberColor(num);
             
             return (
               <div
-                key={`${number}-${index}`}
-                className={`wheel-number ${color}`}
+                key={index}
+                className={`wheel-segment ${color}`}
                 style={{
-                  transform: `rotate(${angle}deg) translateY(-${size * 0.35}px)`,
-                  transformOrigin: '50% 100%'
+                  transform: `rotate(${angle}deg) translateY(-140px)`
                 }}
               >
-                <span 
-                  className="number-text"
-                  style={{
-                    transform: `rotate(${-angle}deg)`,
-                    fontSize: `${size * 0.04}px`
-                  }}
-                >
-                  {number}
-                </span>
+                <span className="wheel-number">{num}</span>
               </div>
             );
           })}
         </div>
-
-        {/* Ball track */}
-        <div className="ball-track">
-          <div 
-            ref={ballRef}
-            className="roulette-ball"
-            style={{
-              transform: `rotate(${ballRotation}deg) translateX(${size * 0.38}px)`,
-              transition: getBallTransitionStyle()
-            }}
-          >
-            <div className="ball"></div>
-          </div>
-        </div>
-
-        {/* Center hub */}
-        <div className="wheel-center">
-          <div className="center-logo">
-            {animationPhase === 'idle' && winningNumber !== null ? (
-              <span className="winning-number">{winningNumber}</span>
-            ) : (
-              <span className="question-mark">?</span>
-            )}
-          </div>
-        </div>
-
-        {/* Pointer */}
-        <div className="wheel-pointer"></div>
       </div>
+
+      {/* Affichage du résultat */}
+      {currentNumber !== null && !isSpinning && (
+        <div className="result-display">
+          <div className={`result-bubble ${getNumberColor(currentNumber)}`}>
+            <span className="result-label">Résultat</span>
+            <span className="result-value">{currentNumber}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default RouletteWheel;
-

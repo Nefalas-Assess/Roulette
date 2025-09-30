@@ -36,7 +36,7 @@ const RouletteWheel = ({ isSpinning, result, winningNumber }) => {
       // Afficher le numéro gagnant après l'animation
       setTimeout(() => {
         setDisplayNumber(result.number);
-      }, 3000);
+      }, 10000);
     }
   }, [isSpinning, result]);
 
@@ -54,7 +54,7 @@ const RouletteWheel = ({ isSpinning, result, winningNumber }) => {
           className={`wheel ${isSpinning ? 'spinning' : ''}`}
           style={{ 
             transform: `rotate(${rotation}deg)`,
-            transition: isSpinning ? 'transform 3s cubic-bezier(0.25, 0.1, 0.25, 1)' : 'none'
+            transition: isSpinning ? 'transform 10s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none'
           }}
         >
           {/* Cercle central */}

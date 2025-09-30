@@ -20,6 +20,10 @@ function App() {
   const [result, setResult] = useState(null);
   const [winningNumber, setWinningNumber] = useState(null);
   
+  // États pour le système automatique
+  const [timeUntilSpin, setTimeUntilSpin] = useState(30);
+  const [canBet, setCanBet] = useState(true);
+  
   // États des paris
   const [selectedAmount, setSelectedAmount] = useState(BET_AMOUNTS[0]);
   const [activeBets, setActiveBets] = useState([]);
@@ -39,6 +43,31 @@ function App() {
     checkTimers();
   }, [wallet]);
 
+  // Système de timer automatique
+  useEffect(() => {
+    let interval;
+    
+    if (!isSpinning && canBet) {
+      interval = setInterval(() => {
+        setTimeUntilSpin(prev => {
+          if (prev <= 1) {
+            // Lancer automatiquement si il y a des paris
+            const bets = bettingManager.getBets();
+            if (bets.length > 0) {
+              handleAutoSpin();
+            }
+            return 30; // Reset le timer
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isSpinning, canBet]);
+
   // Vérification des timers pour les récompenses
   const checkTimers = () => {
     const now = Date.now();
@@ -51,7 +80,7 @@ function App() {
 
   // Fonction pour ajouter un pari
   const handlePlaceBet = (betType, betValue) => {
-    if (isSpinning) return;
+    if (isSpinning || !canBet) return;
 
     // Validation du solde
     const validation = wallet.validateTransaction(selectedAmount);
@@ -97,17 +126,18 @@ function App() {
     setMessage(`🔄 Tous les paris effacés : ${totalRefund} jetons remboursés`);
   };
 
-  // Fonction principale de spin
-  const handleSpin = () => {
+  // Fonction automatique de spin
+  const handleAutoSpin = () => {
     if (isSpinning) return;
 
     const bets = bettingManager.getBets();
     if (bets.length === 0) {
-      setMessage('❌ Placez au moins un pari avant de lancer');
+      setTimeUntilSpin(30); // Reset le timer si pas de paris
       return;
     }
 
     setIsSpinning(true);
+    setCanBet(false);
     setMessage('🎰 La roue tourne...');
 
     // Simulation du spin
@@ -153,11 +183,13 @@ function App() {
         bets: [...bets]
       });
 
-      // Nettoyage des paris
+      // Nettoyage des paris et reset du système
       bettingManager.clearBets();
       setActiveBets([]);
       setIsSpinning(false);
-    }, 3000);
+      setCanBet(true);
+      setTimeUntilSpin(30); // Reset le timer pour la prochaine partie
+    }, 10000); // 10 secondes d'animation
   };
 
   // Récompense publicitaire
@@ -345,14 +377,20 @@ function App() {
             </div>
           )}
 
-          {/* Bouton de lancement */}
-          <button 
-            className="spin-btn"
-            onClick={handleSpin}
-            disabled={isSpinning || activeBets.length === 0}
-          >
-            {isSpinning ? '🎰 La roue tourne...' : '🎯 Lancer la roue'}
-          </button>
+          {/* Affichage du timer automatique */}
+          <div className="timer-display">
+            {isSpinning ? (
+              <div className="spinning-message">🎰 La roue tourne...</div>
+            ) : (
+              <div className="countdown-timer">
+                <div className="timer-label">Prochaine partie dans :</div>
+                <div className="timer-value">{timeUntilSpin}s</div>
+                {activeBets.length === 0 && (
+                  <div className="timer-note">Placez vos paris !</div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Message de feedback */}
           {message && (

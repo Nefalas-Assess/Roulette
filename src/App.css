@@ -577,3 +577,180 @@
     grid-template-columns: 1fr;
   }
 }
+/* Styles pour la table de roulette cliquable */
+.roulette-table {
+  background: #0f5132;
+  border: 3px solid #ffd700;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 1rem 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.roulette-row {
+  display: flex;
+  margin-bottom: 2px;
+}
+
+.bet-cell {
+  flex: 1;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ffffff;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.bet-cell:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+  z-index: 1;
+  position: relative;
+}
+
+/* Styles pour les numéros */
+.bet-cell.number {
+  background: #ffffff;
+  color: #000000;
+  min-width: 40px;
+}
+
+.bet-cell.number.red {
+  background: #dc143c;
+  color: #ffffff;
+}
+
+.bet-cell.number.black {
+  background: #000000;
+  color: #ffffff;
+}
+
+/* Styles pour les zéros */
+.bet-cell.zero,
+.bet-cell.double-zero {
+  background: #28a745;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.zero-row {
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+.zero-row .bet-cell {
+  min-width: 60px;
+  margin: 0 2px;
+}
+
+/* Styles pour les douzaines */
+.bet-cell.dozen {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 12px;
+  height: 35px;
+}
+
+.dozen-row {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+/* Styles pour les chances simples */
+.bet-cell.simple-chance {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 11px;
+  height: 35px;
+}
+
+.bet-cell.red-diamond {
+  background: #dc143c;
+  color: #ffffff;
+  font-size: 20px;
+}
+
+.bet-cell.black-diamond {
+  background: #000000;
+  color: #ffffff;
+  font-size: 20px;
+}
+
+.simple-chance-row {
+  margin-top: 5px;
+}
+
+/* Styles pour l'en-tête avec le bouton pub */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ad-btn {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.ad-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ee5a52 0%, #dc4c64 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+
+.ad-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #6c757d;
+}
+
+/* Responsive pour la table de roulette */
+@media (max-width: 768px) {
+  .bet-cell {
+    height: 35px;
+    font-size: 12px;
+  }
+  
+  .bet-cell.zero,
+  .bet-cell.double-zero {
+    font-size: 14px;
+  }
+  
+  .zero-row .bet-cell {
+    min-width: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bet-cell {
+    height: 30px;
+    font-size: 10px;
+  }
+  
+  .bet-cell.zero,
+  .bet-cell.double-zero {
+    font-size: 12px;
+  }
+  
+  .zero-row .bet-cell {
+    min-width: 40px;
+  }
+  
+  .header-right {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

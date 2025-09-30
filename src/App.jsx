@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import RouletteWheel from './RouletteWheel';
 import { spinWheel } from './rouletteLogic';
 import { WalletSystem } from './walletSystem';
-import { BettingManager, BET_TYPES, BET_AMOUNTS } from './bettingSystem';
+import { BettingManager, BET_TYPES, BET_AMOUNTS, BETTING_AREAS, RED_NUMBERS, BLACK_NUMBERS } from './bettingSystem';
 import { AchievementSystem } from './achievementSystem';
 import { AdSystem } from './adSystem';
 import './App.css';
@@ -21,9 +21,7 @@ function App() {
   const [winningNumber, setWinningNumber] = useState(null);
   
   // États des paris
-  const [selectedAmount, setSelectedAmount] = useState(BET_AMOUNTS.MIN);
-  const [selectedBetType, setSelectedBetType] = useState('');
-  const [selectedNumber, setSelectedNumber] = useState('');
+  const [selectedAmount, setSelectedAmount] = useState(BET_AMOUNTS[0]);
   const [activeBets, setActiveBets] = useState([]);
   
   // États des résultats
@@ -52,21 +50,8 @@ function App() {
   };
 
   // Fonction pour ajouter un pari
-  const handleAddBet = () => {
-    // Validation du type de pari
-    if (!selectedBetType) {
-      setMessage('❌ Veuillez sélectionner un type de pari');
-      return;
-    }
-
-    // Validation du numéro pour les paris STRAIGHT_UP
-    if (selectedBetType === 'STRAIGHT_UP') {
-      const num = parseInt(selectedNumber);
-      if (isNaN(num) || num < 0 || num > 36) {
-        setMessage('❌ Numéro invalide (0-36)');
-        return;
-      }
-    }
+  const handlePlaceBet = (betType, betValue) => {
+    if (isSpinning) return;
 
     // Validation du solde
     const validation = wallet.validateTransaction(selectedAmount);
@@ -75,13 +60,8 @@ function App() {
       return;
     }
 
-    // Ajout du pari
     try {
-      const betValue = selectedBetType === 'STRAIGHT_UP' 
-        ? parseInt(selectedNumber) 
-        : selectedBetType;
-      
-      bettingManager.addBet(selectedBetType, betValue, selectedAmount);
+      bettingManager.addBet(betType, betValue, selectedAmount);
       
       // Déduction du solde
       wallet.deductBalance(selectedAmount);
@@ -89,24 +69,21 @@ function App() {
       
       // Mise à jour de l'affichage
       setActiveBets(bettingManager.getBets());
-      setMessage(`✅ Pari ajouté : ${formatBetType(selectedBetType)} (${selectedAmount} jetons)`);
+      setMessage(`✅ Pari ajouté : ${formatBetDisplay(betType, betValue)} (${selectedAmount} jetons)`);
       
-      // Réinitialisation de la sélection
-      setSelectedNumber('');
     } catch (error) {
       setMessage(`❌ ${error.message}`);
     }
   };
 
   // Fonction pour retirer un pari
-  const handleRemoveBet = (index) => {
-    const bet = bettingManager.getBets()[index];
-    if (bet) {
-      bettingManager.removeBet(index);
-      wallet.addBalance(bet.amount);
+  const handleRemoveBet = (betId) => {
+    const removedBet = bettingManager.removeBet(betId);
+    if (removedBet) {
+      wallet.addBalance(removedBet.amount);
       setBalance(wallet.getBalance());
       setActiveBets(bettingManager.getBets());
-      setMessage(`🔄 Pari retiré : ${bet.amount} jetons remboursés`);
+      setMessage(`🔄 Pari retiré : ${removedBet.amount} jetons remboursés`);
     }
   };
 
@@ -183,22 +160,6 @@ function App() {
     }, 3000);
   };
 
-  // Récompense horaire
-  const handleHourlyClaim = () => {
-    if (!canClaimHourly) {
-      setMessage('⏰ Récompense déjà réclamée. Revenez dans 1 heure.');
-      return;
-    }
-
-    const reward = wallet.claimHourlyReward();
-    setBalance(wallet.getBalance());
-    setCanClaimHourly(false);
-    localStorage.setItem('lastHourlyClaim', Date.now().toString());
-    setMessage(`🎁 Vous avez reçu ${reward} jetons !`);
-
-    setTimeout(() => setCanClaimHourly(true), 3600000);
-  };
-
   // Récompense publicitaire
   const handleWatchAd = () => {
     if (!canWatchAd) {
@@ -224,7 +185,10 @@ function App() {
   };
 
   // Fonction utilitaire pour formater les types de paris
-  const formatBetType = (type) => {
+  const formatBetDisplay = (type, value) => {
+    if (type === 'STRAIGHT_UP') {
+      return `N° ${value}`;
+    }
     const labels = {
       'RED': 'Rouge',
       'BLACK': 'Noir',
@@ -232,18 +196,86 @@ function App() {
       'ODD': 'Impair',
       'LOW': '1-18',
       'HIGH': '19-36',
-      'STRAIGHT_UP': `N° ${selectedNumber}`
+      'FIRST_DOZEN': '1er 12',
+      'SECOND_DOZEN': '2ème 12',
+      'THIRD_DOZEN': '3ème 12'
     };
-    return labels[type] || type;
+    return labels[value] || value;
+  };
+
+  const renderBettingTable = () => {
+    const tableLayout = [];
+
+    // Row for 0 and 00
+    tableLayout.push(
+      <div key="zero-row" className="roulette-row zero-row">
+        <div className="bet-cell zero" onClick={() => handlePlaceBet('STRAIGHT_UP', 0)}>0</div>
+        <div className="bet-cell double-zero" onClick={() => handlePlaceBet('STRAIGHT_UP', '00')}>00</div>
+      </div>
+    );
+
+    // Main numbers 1-36 (arranged in 3 columns, 12 rows)
+    for (let row = 0; row < 12; row++) {
+      const rowNumbers = [];
+      for (let col = 0; col < 3; col++) {
+        const num = (row * 3) + col + 1;
+        if (num <= 36) {
+          const isRed = RED_NUMBERS.includes(num);
+          const isBlack = BLACK_NUMBERS.includes(num);
+          rowNumbers.push(
+            <div 
+              key={num}
+              className={`bet-cell number ${isRed ? 'red' : ''} ${isBlack ? 'black' : ''}`}
+              onClick={() => handlePlaceBet('STRAIGHT_UP', num)}
+            >
+              {num}
+            </div>
+          );
+        }
+      }
+      tableLayout.push(<div key={`number-row-${row}`} className="roulette-row">{rowNumbers}</div>);
+    }
+
+    // Outside bets (1st 12, 2nd 12, 3rd 12)
+    tableLayout.push(
+      <div key="dozen-row" className="roulette-row dozen-row">
+        <div className="bet-cell dozen" onClick={() => handlePlaceBet('DOZEN', 'FIRST_DOZEN')}>1st 12</div>
+        <div className="bet-cell dozen" onClick={() => handlePlaceBet('DOZEN', 'SECOND_DOZEN')}>2nd 12</div>
+        <div className="bet-cell dozen" onClick={() => handlePlaceBet('DOZEN', 'THIRD_DOZEN')}>3rd 12</div>
+      </div>
+    );
+
+    // Simple chances (1-18, Even, Red, Black, Odd, 19-36)
+    tableLayout.push(
+      <div key="simple-chance-row" className="roulette-row simple-chance-row">
+        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('LOW', 'LOW')}>1-18</div>
+        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('EVEN', 'EVEN')}>EVEN</div>
+        <div className="bet-cell simple-chance red-diamond" onClick={() => handlePlaceBet('RED', 'RED')}>♦</div>
+        <div className="bet-cell simple-chance black-diamond" onClick={() => handlePlaceBet('BLACK', 'BLACK')}>♠</div>
+        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('ODD', 'ODD')}>ODD</div>
+        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('HIGH', 'HIGH')}>19-36</div>
+      </div>
+    );
+
+    return <div className="roulette-table">{tableLayout}</div>;
   };
 
   return (
     <div className="app-container">
       <header className="app-header">
         <h1>🎰 Roulette Américaine</h1>
-        <div className="balance-display">
-          <span className="balance-label">Solde:</span>
-          <span className="balance-amount">{balance} 🪙</span>
+        <div className="header-right">
+          <div className="balance-display">
+            <span className="balance-label">Solde:</span>
+            <span className="balance-amount">{balance} 🪙</span>
+          </div>
+          <button 
+            className="reward-btn ad-btn"
+            onClick={handleWatchAd}
+            disabled={!canWatchAd}
+          >
+            📺 Regarder une pub (50 🪙)
+          </button>
         </div>
       </header>
 
@@ -265,7 +297,7 @@ function App() {
           <div className="amount-selector">
             <label>Montant du pari:</label>
             <div className="amount-buttons">
-              {[10, 25, 50, 100, 250, 500].map(amount => (
+              {BET_AMOUNTS.map(amount => (
                 <button
                   key={amount}
                   className={`amount-btn ${selectedAmount === amount ? 'selected' : ''}`}
@@ -277,94 +309,22 @@ function App() {
             </div>
           </div>
 
-          {/* Sélection du type de pari */}
-          <div className="bet-type-selector">
-            <label>Type de pari:</label>
-            <div className="bet-type-grid">
-              <button
-                className={`bet-type-btn red ${selectedBetType === 'RED' ? 'selected' : ''}`}
-                onClick={() => setSelectedBetType('RED')}
-              >
-                Rouge
-              </button>
-              <button
-                className={`bet-type-btn black ${selectedBetType === 'BLACK' ? 'selected' : ''}`}
-                onClick={() => setSelectedBetType('BLACK')}
-              >
-                Noir
-              </button>
-              <button
-                className={`bet-type-btn ${selectedBetType === 'EVEN' ? 'selected' : ''}`}
-                onClick={() => setSelectedBetType('EVEN')}
-              >
-                Pair
-              </button>
-              <button
-                className={`bet-type-btn ${selectedBetType === 'ODD' ? 'selected' : ''}`}
-                onClick={() => setSelectedBetType('ODD')}
-              >
-                Impair
-              </button>
-              <button
-                className={`bet-type-btn ${selectedBetType === 'LOW' ? 'selected' : ''}`}
-                onClick={() => setSelectedBetType('LOW')}
-              >
-                1-18
-              </button>
-              <button
-                className={`bet-type-btn ${selectedBetType === 'HIGH' ? 'selected' : ''}`}
-                onClick={() => setSelectedBetType('HIGH')}
-              >
-                19-36
-              </button>
-            </div>
-            
-            {/* Pari sur numéro unique */}
-            <div className="straight-up-bet">
-              <button
-                className={`bet-type-btn ${selectedBetType === 'STRAIGHT_UP' ? 'selected' : ''}`}
-                onClick={() => setSelectedBetType('STRAIGHT_UP')}
-              >
-                Numéro Unique
-              </button>
-              {selectedBetType === 'STRAIGHT_UP' && (
-                <input
-                  type="number"
-                  min="0"
-                  max="36"
-                  placeholder="0-36"
-                  value={selectedNumber}
-                  onChange={(e) => setSelectedNumber(e.target.value)}
-                  className="number-input"
-                />
-              )}
-            </div>
-          </div>
-
-          <button 
-            className="add-bet-btn"
-            onClick={handleAddBet}
-            disabled={isSpinning}
-          >
-            ➕ Ajouter le pari
-          </button>
+          {/* Table de paris cliquable */}
+          {renderBettingTable()}
 
           {/* Paris actifs */}
           {activeBets.length > 0 && (
             <div className="active-bets">
               <h3>Paris actifs ({activeBets.length})</h3>
               <div className="bets-list">
-                {activeBets.map((bet, index) => (
-                  <div key={index} className="bet-item">
+                {activeBets.map((bet) => (
+                  <div key={bet.id} className="bet-item">
                     <span className="bet-info">
-                      {bet.type === BET_TYPES.STRAIGHT_UP 
-                        ? `N° ${bet.value}` 
-                        : formatBetType(bet.type)
-                      } - {bet.amount} 🪙
+                      {formatBetDisplay(bet.type, bet.value)} - {bet.amount} 🪙
                     </span>
                     <button
                       className="remove-bet-btn"
-                      onClick={() => handleRemoveBet(index)}
+                      onClick={() => handleRemoveBet(bet.id)}
                       disabled={isSpinning}
                     >
                       ❌
@@ -417,25 +377,6 @@ function App() {
             </p>
           </div>
         )}
-
-        {/* Récompenses */}
-        <div className="rewards-section">
-          <h3>Récompenses gratuites</h3>
-          <button 
-            className="reward-btn"
-            onClick={handleHourlyClaim}
-            disabled={!canClaimHourly}
-          >
-            🎁 Récompense horaire (100 🪙)
-          </button>
-          <button 
-            className="reward-btn"
-            onClick={handleWatchAd}
-            disabled={!canWatchAd}
-          >
-            📺 Regarder une pub (50 🪙)
-          </button>
-        </div>
 
         {/* Succès débloqués */}
         {achievements.length > 0 && (

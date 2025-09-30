@@ -113,9 +113,13 @@
   justify-content: center;
   font-weight: bold;
   font-size: 0.8rem;
-  transform-origin: center 150px;
+  transform-origin: 50% 150px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  top: 50%;
+  left: 50%;
+  margin-left: -15px;
+  margin-top: -15px;
 }
 
 .wheel-segment.red {

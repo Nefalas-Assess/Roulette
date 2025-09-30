@@ -3,7 +3,7 @@
 /**
  * Available bet amounts
  */
-export const BET_AMOUNTS = [1, 5, 10, 25, 50];
+export const BET_AMOUNTS = [10, 25, 50, 100, 250, 500];
 
 /**
  * Bet types and their payout ratios
@@ -62,12 +62,12 @@ export const BETTING_AREAS = {
  * Bet class to represent individual bets
  */
 export class Bet {
-    constructor(type, numbers, amount, area = null) {
+    constructor(type, value, amount, numbers) {
         this.id = Date.now() + Math.random();
         this.type = type;
-        this.numbers = numbers;
+        this.value = value; // The specific value bet on (e.g., 'RED', 15, 'FIRST_DOZEN')
         this.amount = amount;
-        this.area = area; // For outside bets like 'RED', 'BLACK', etc.
+        this.numbers = numbers; // Array of numbers covered by this bet
     }
 }
 
@@ -79,54 +79,62 @@ export class BettingManager {
         this.currentBets = [];
     }
 
-    placeBet(betType, amount, number = null) {
-        if (!BET_TYPES[betType]) {
-            console.error(`Invalid bet type: ${betType}`);
-            return null;
+    addBet(type, value, amount) {
+        if (!BET_TYPES[type]) {
+            throw new Error(`Type de pari invalide: ${type}`);
         }
-
         if (!BET_AMOUNTS.includes(amount)) {
-            console.error(`Invalid bet amount: ${amount}`);
-            return null;
+            throw new Error(`Montant de pari invalide: ${amount}`);
         }
 
-        let numbersToBetOn = [];
-        let area = null;
-
-        if (BETTING_AREAS[betType]) {
-            // Handle outside bets or specific number bets defined in BETTING_AREAS
-            numbersToBetOn = BETTING_AREAS[betType].numbers;
-            area = betType;
-        } else if (betType === 'STRAIGHT_UP' && number !== null) {
-            // Handle straight up bets for individual numbers not pre-defined in BETTING_AREAS
-            numbersToBetOn = [number];
+        let numbersCovered = [];
+        if (type === 'STRAIGHT_UP') {
+            numbersCovered = [value];
+        } else if (BETTING_AREAS[value]) {
+            numbersCovered = BETTING_AREAS[value].numbers;
         } else {
-            console.error(`Cannot place bet for type ${betType} with number ${number}`);
-            return null;
+            throw new Error(`Impossible de déterminer les numéros couverts pour le pari: ${type} sur ${value}`);
         }
 
-        const newBet = new Bet(betType, numbersToBetOn, amount, area);
+        const newBet = new Bet(type, value, amount, numbersCovered);
         this.currentBets.push(newBet);
-        console.log(`Bet placed: ${betType} on ${numbersToBetOn} for ${amount}`);
+        console.log(`Pari ajouté: ${type} sur ${value} pour ${amount}`);
         return newBet;
     }
 
-    calculateWinnings(winningNumber) {
+    removeBet(id) {
+        const index = this.currentBets.findIndex(bet => bet.id === id);
+        if (index > -1) {
+            const removedBet = this.currentBets.splice(index, 1)[0];
+            console.log(`Pari retiré: ${removedBet.type} sur ${removedBet.value} pour ${removedBet.amount}`);
+            return removedBet;
+        }
+        return null;
+    }
+
+    getBets() {
+        return [...this.currentBets];
+    }
+
+    getTotalBetAmount() {
+        return this.currentBets.reduce((total, bet) => total + bet.amount, 0);
+    }
+
+    calculateTotalWinnings(winningNumber) {
         let totalWinnings = 0;
         this.currentBets.forEach(bet => {
             if (bet.numbers.includes(winningNumber)) {
                 const payoutRatio = BET_TYPES[bet.type].payout;
-                totalWinnings += bet.amount * payoutRatio;
-                console.log(`Winning bet: ${bet.type} for ${bet.amount}. Winnings: ${bet.amount * payoutRatio}`);
+                totalWinnings += bet.amount * (payoutRatio + 1); // +1 pour récupérer la mise initiale
+                console.log(`Pari gagnant: ${bet.type} pour ${bet.amount}. Gains: ${bet.amount * (payoutRatio + 1)}`);
             }
         });
-        this.currentBets = []; // Clear bets after each round
         return totalWinnings;
     }
 
     clearBets() {
         this.currentBets = [];
-        console.log('All bets cleared.');
+        console.log('Tous les paris effacés.');
     }
 }
 
@@ -135,3 +143,4 @@ export default BettingManager;
 
 // Also exporting a named instance for convenience, if needed elsewhere
 export const bettingManager = new BettingManager();
+

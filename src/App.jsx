@@ -80,26 +80,26 @@ function App() {
   };
 
   // Fonction pour ajouter un pari
-  const handlePlaceBet = (betType, betValue) => {
+  const handlePlaceBet = (betType, betValue, amount = selectedAmount) => {
     if (isSpinning || !canBet) return;
 
     // Validation du solde
-    const validation = wallet.validateTransaction(selectedAmount);
+    const validation = wallet.validateTransaction(amount);
     if (!validation.valid) {
       setMessage(`❌ ${validation.reason}`);
       return;
     }
 
     try {
-      bettingManager.addBet(betType, betValue, selectedAmount);
+      bettingManager.addBet(betType, betValue, amount);
       
       // Déduction du solde
-      wallet.deductBalance(selectedAmount);
+      wallet.deductBalance(amount);
       setBalance(wallet.getBalance());
       
       // Mise à jour de l'affichage
       setActiveBets(bettingManager.getBets());
-      setMessage(`✅ Pari ajouté : ${formatBetDisplay(betType, betValue)} (${selectedAmount} jetons)`);
+      setMessage(`✅ Pari ajouté : ${formatBetDisplay(betType, betValue)} (${amount} jetons)`);
       
     } catch (error) {
       setMessage(`❌ ${error.message}`);
@@ -313,7 +313,22 @@ function App() {
 
       <main className="app-main">
         {/* Affichage du timer automatique (déplacé au-dessus de la roue) */}
-        <div className="timer-display-container">
+
+
+        {/* Section de la roue */}
+        <div className="wheel-section">
+          <RouletteWheel 
+            isSpinning={isSpinning}
+            result={result}
+            winningNumber={winningNumber}
+          />
+        </div>
+
+        {/* Section de pari */}
+        <div className="betting-section">
+          {/* Sélection du montant */}
+          <div className="amount-selector">
+                    <div className="timer-display-container">
           <div className="timer-display">
             {isSpinning ? (
               <div className="spinning-message">🎰 La roue tourne...</div>
@@ -328,23 +343,6 @@ function App() {
             )}
           </div>
         </div>
-
-        {/* Section de la roue */}
-        <div className="wheel-section">
-          <RouletteWheel 
-            isSpinning={isSpinning}
-            result={result}
-            winningNumber={winningNumber}
-          />
-        </div>
-
-        {/* Section de pari */}
-        <div className="betting-section">
-          <h2>Placer vos paris</h2>
-          
-          {/* Sélection du montant */}
-          <div className="amount-selector">
-            <label>Montant du pari:</label>
             <div className="amount-buttons">
               {BET_AMOUNTS.map(amount => (
                 <button
@@ -355,6 +353,14 @@ function App() {
                   {amount} 🪙
                 </button>
               ))}
+              <button
+                key="all-in"
+                className={`amount-btn ${selectedAmount === balance ? 'selected' : ''}`}
+                onClick={() => setSelectedAmount(balance)}
+                disabled={balance === 0 || isSpinning}
+              >
+                All in 🪙
+              </button>
             </div>
           </div>
 

@@ -22,7 +22,7 @@ export const BET_TYPES = {
     EVEN: { name: 'Even', payout: 1, description: 'All even numbers' },
     ODD: { name: 'Odd', payout: 1, description: 'All odd numbers' },
     LOW: { name: '1-18', payout: 1, description: 'Numbers 1-18' },
-    HIGH: { name: '19-36', payout: 1, description: 'Numbers 19-36' }
+    HIGH: { name: '19-36', payout: 1, description: 'Numbers 19-36' },
 };
 
 /**
@@ -138,6 +138,7 @@ export class BettingManager {
         let totalWinnings = 0;
         this.currentBets.forEach(bet => {
             if (bet.numbers.includes(winningNumber)) {
+                // Pour ALL_IN, le payout est basé sur le type de pari sous-jacent (ici, RED)
                 const payoutRatio = BET_TYPES[bet.type].payout;
                 totalWinnings += bet.amount * (payoutRatio + 1); // +1 pour récupérer la mise initiale
                 console.log(`Pari gagnant: ${bet.type} pour ${bet.amount}. Gains: ${bet.amount * (payoutRatio + 1)}`);

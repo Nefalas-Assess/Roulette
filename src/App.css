@@ -91,7 +91,7 @@
   border-radius: 10px;
   text-align: center;
   width: 100%;
-  max-width: 300px; /* Adjust as needed */
+  max-width: 614px; /* Adjust as needed */
   margin-bottom: 1rem; /* Space between timer and wheel */
 }
 
@@ -116,7 +116,6 @@
   font-size: 0.8rem;
   color: #aaa;
 }
-
 .betting-section {
   grid-column: 2;
   background: rgba(255, 255, 255, 0.05);
@@ -125,8 +124,8 @@
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   overflow-y: auto;
-  max-height: fit-content;
-  max-width: 680px;
+  max-height: calc(100vh - 140px);
+  width: 648px; /* Largeur combinée de all-numbers-row (540px) + dozen-row (100px) + gap (8px) */
 }
 
 .betting-section h2 {
@@ -147,8 +146,12 @@
 }
 
 .amount-buttons {
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* Centrer les boutons */
+  gap: 0.8rem; /* Espacement entre les boutons */
+  max-width: 540px;
+  margin: 0 auto; /* Centrer le conteneur des boutons */
 }
 
 .amount-btn {
@@ -584,7 +587,6 @@
 
 .bet-cell.zero, .bet-cell.double-zero {
   background-color: #28a745;
-  width: 40px;
 }
 
 .bet-cell.dozen, .bet-cell.simple-chance {
@@ -632,8 +634,7 @@
 .roulette-row.simple-chance-row .bet-cell {
   flex-grow: 1;
   flex-basis: 0;
-  width: 40px; /* Taille fixe pour chaque numéro */
-  height: 40px;
+  min-width: 60px; /* Minimum width for these cells */
 }
 
 /* Media Queries pour la responsivité */
@@ -655,12 +656,15 @@
     gap: 1rem;
   }
 
-  .header-right {
-    width: 100%;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-  }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* Espace entre les éléments du header-right */
+}
+
+.balance-display {
+  text-align: right; /* Aligner le texte à droite */
+}
 
   .balance-display {
     padding: 0.8rem 1.5rem;
@@ -692,7 +696,6 @@
   flex-direction: row;
   gap: 0.5rem;
   margin-top: 1.5rem;
-  max-width: 650px;
 }
 
 .roulette-row.all-numbers-row {

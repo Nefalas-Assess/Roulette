@@ -161,7 +161,7 @@ function App() {
 
       // Statistiques pour les succès
       const unlockedAchievements = achievementSystem.recordSpin(spinResult.number, netProfit, bettingManager.getLastBetType(), bettingManager.getLastBetValue());
-      if (unlockedAchievements.length > 0) {
+      if (unlockedAchievements && unlockedAchievements.length > 0) {
         setAchievements(prev => [...prev, ...unlockedAchievements]);
       }
 

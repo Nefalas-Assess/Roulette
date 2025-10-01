@@ -757,3 +757,14 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
   }
 }
 
+
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* Espacement entre les éléments du header */
+}
+
+.reward-btn, .test-btn {
+  white-space: nowrap; /* Empêche le texte de se casser sur plusieurs lignes */
+}

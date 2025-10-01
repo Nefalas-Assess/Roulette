@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import RouletteWheel from './RouletteWheel';
 import { spinWheel } from './rouletteLogic';
@@ -250,28 +251,23 @@ function App() {
       </div>
     );
 
-    // Main numbers 1-36 (arranged in 3 columns, 12 rows)
-    for (let row = 0; row < 12; row++) {
-      const rowNumbers = [];
-      for (let col = 0; col < 3; col++) {
-        const num = (row * 3) + col + 1;
-        if (num <= 36) {
-          const isRed = RED_NUMBERS.includes(num);
-          const isBlack = BLACK_NUMBERS.includes(num);
-          rowNumbers.push(
-            <div 
-              key={num}
-              className={`bet-cell number ${isRed ? 'red' : ''} ${isBlack ? 'black' : ''}`}
-              onClick={() => handlePlaceBet('STRAIGHT_UP', num)}
-            >
-              {num}
-              {hasActiveBet('STRAIGHT_UP', num) && <div className="bet-indicator"></div>}
-            </div>
-          );
-        }
-      }
-      tableLayout.push(<div key={`number-row-${row}`} className="roulette-row">{rowNumbers}</div>);
+    // Main numbers 1-36 (all in one row)
+    const allNumbers = [];
+    for (let i = 1; i <= 36; i++) {
+      const isRed = RED_NUMBERS.includes(i);
+      const isBlack = BLACK_NUMBERS.includes(i);
+      allNumbers.push(
+        <div 
+          key={i}
+          className={`bet-cell number ${isRed ? 'red' : ''} ${isBlack ? 'black' : ''}`}
+          onClick={() => handlePlaceBet('STRAIGHT_UP', i)}
+        >
+          {i}
+          {hasActiveBet('STRAIGHT_UP', i) && <div className="bet-indicator"></div>}
+        </div>
+      );
     }
+    tableLayout.push(<div key="all-numbers-row" className="roulette-row all-numbers-row">{allNumbers}</div>);
 
     // Outside bets (1st 12, 2nd 12, 3rd 12)
     tableLayout.push(
@@ -316,14 +312,8 @@ function App() {
       </header>
 
       <main className="app-main">
-        {/* Section de la roue */}
-        <div className="wheel-section">
-          <RouletteWheel 
-            isSpinning={isSpinning}
-            result={result}
-            winningNumber={winningNumber}
-          />
-          {/* Affichage du timer automatique */}
+        {/* Affichage du timer automatique (déplacé au-dessus de la roue) */}
+        <div className="timer-display-container">
           <div className="timer-display">
             {isSpinning ? (
               <div className="spinning-message">🎰 La roue tourne...</div>
@@ -337,6 +327,15 @@ function App() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Section de la roue */}
+        <div className="wheel-section">
+          <RouletteWheel 
+            isSpinning={isSpinning}
+            result={result}
+            winningNumber={winningNumber}
+          />
         </div>
 
         {/* Section de pari */}
@@ -410,3 +409,4 @@ function App() {
 }
 
 export default App;
+

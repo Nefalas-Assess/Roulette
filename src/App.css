@@ -125,7 +125,8 @@
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   overflow-y: auto;
-  max-height: calc(100vh - 140px);
+  max-height: fit-content;
+  max-width: 680px;
 }
 
 .betting-section h2 {
@@ -148,8 +149,6 @@
 .amount-buttons {
   grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
-  max-width: 540px;
-  
 }
 
 .amount-btn {
@@ -693,6 +692,7 @@
   flex-direction: row;
   gap: 0.5rem;
   margin-top: 1.5rem;
+  max-width: 650px;
 }
 
 .roulette-row.all-numbers-row {

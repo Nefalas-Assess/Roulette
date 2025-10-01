@@ -267,14 +267,14 @@ function App() {
         </div>
       );
     }
-    tableLayout.push(<div key="all-numbers-row" className="roulette-row all-numbers-row">{allNumbers}</div>);
-
-    // Outside bets (1st 12, 2nd 12, 3rd 12)
     tableLayout.push(
-      <div key="dozen-row" className="roulette-row dozen-row">
-        <div className="bet-cell dozen" onClick={() => handlePlaceBet('DOZEN', 'FIRST_DOZEN')}>1st 12{hasActiveBet('DOZEN', 'FIRST_DOZEN') && <div className="bet-indicator"></div>}</div>
-        <div className="bet-cell dozen" onClick={() => handlePlaceBet('DOZEN', 'SECOND_DOZEN')}>2nd 12{hasActiveBet('DOZEN', 'SECOND_DOZEN') && <div className="bet-indicator"></div>}</div>
-        <div className="bet-cell dozen" onClick={() => handlePlaceBet('DOZEN', 'THIRD_DOZEN')}>3rd 12{hasActiveBet('DOZEN', 'THIRD_DOZEN') && <div className="bet-indicator"></div>}</div>
+      <div key="main-betting-area" className="main-betting-area">
+        <div className="roulette-row all-numbers-row">{allNumbers}</div>
+        <div className="roulette-row dozen-row">
+          <div className="bet-cell dozen" onClick={() => handlePlaceBet("DOZEN", "FIRST_DOZEN")}>1st 12{hasActiveBet("DOZEN", "FIRST_DOZEN") && <div className="bet-indicator"></div>}</div>
+          <div className="bet-cell dozen" onClick={() => handlePlaceBet("DOZEN", "SECOND_DOZEN")}>2nd 12{hasActiveBet("DOZEN", "SECOND_DOZEN") && <div className="bet-indicator"></div>}</div>
+          <div className="bet-cell dozen" onClick={() => handlePlaceBet("DOZEN", "THIRD_DOZEN")}>3rd 12{hasActiveBet("DOZEN", "THIRD_DOZEN") && <div className="bet-indicator"></div>}</div>
+        </div>
       </div>
     );
 
@@ -360,17 +360,6 @@ function App() {
 
           {/* Table de paris cliquable */}
           {renderBettingTable(activeBets)}
-
-
-
-
-
-          {/* Message de feedback */}
-          {message && (
-            <div className="message-box">
-              {message}
-            </div>
-          )}
         </div>
 
         {/* Résultat du dernier tour */}

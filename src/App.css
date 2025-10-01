@@ -585,6 +585,7 @@
 
 .bet-cell.zero, .bet-cell.double-zero {
   background-color: #28a745;
+  width: 40px;
 }
 
 .bet-cell.dozen, .bet-cell.simple-chance {
@@ -632,7 +633,8 @@
 .roulette-row.simple-chance-row .bet-cell {
   flex-grow: 1;
   flex-basis: 0;
-  min-width: 60px; /* Minimum width for these cells */
+  width: 40px; /* Taille fixe pour chaque numéro */
+  height: 40px;
 }
 
 /* Media Queries pour la responsivité */
@@ -685,3 +687,49 @@
     font-size: 0.7rem;
   }
 }
+
+.main-betting-area {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.roulette-row.all-numbers-row {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0.2rem;
+  max-width: 540px;
+  flex-grow: 1;
+}
+
+.roulette-row.dozen-row {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.2rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  width: 100px; /* Ajustez la largeur selon vos besoins */
+}
+
+.roulette-row.dozen-row .bet-cell {
+  width: 100%;
+  height: auto;
+  min-height: 40px;
+  flex-grow: 1;
+  font-size: 0.9rem;
+  padding: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .main-betting-area {
+    flex-direction: column;
+  }
+
+  .roulette-row.dozen-row {
+    flex-direction: row;
+    width: auto;
+  }
+}
+

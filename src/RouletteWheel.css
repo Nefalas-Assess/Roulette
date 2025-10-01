@@ -6,12 +6,14 @@
   align-items: center;
   gap: 2rem;
   padding: 2rem;
+  height: 500px;
+  width: 500px;
 }
 
 .wheel-wrapper {
   position: relative;
-  width: 280px; /* Réduit de 350px */
-  height: 280px; /* Réduit de 350px */
+  width: 400px; /* Réduit de 350px */
+  height: 400px; /* Réduit de 350px */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -19,7 +21,7 @@
 
 .wheel-indicator {
   position: absolute;
-  top: -20px;
+  top: -40px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 2rem;
@@ -40,9 +42,9 @@
 
 .wheel {
   position: relative;
-  width: 230px; /* Réduit de 300px */
-  height: 230px; /* Réduit de 300px */
-  border-radius: 50%;
+  width: 400px; /* Réduit de 300px */
+  height: 400px; /* Réduit de 300px */
+  border-radius: 100%;
   background: radial-gradient(circle, #2c2c2c 0%, #1a1a1a 100%);
   box-shadow: 
     0 0 30px rgba(0, 0, 0, 0.5),
@@ -132,7 +134,7 @@
   transform-origin: 50% 115px; /* Ajusté pour la nouvelle taille de la roue (230px de diamètre, donc 115px de rayon) */
   border: 2px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-  top: 50%;
+  top: 25%;
   left: 50%;
   margin-left: -15px;
   margin-top: -15px;
@@ -226,15 +228,11 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-  .wheel-wrapper {
-    width: 280px;
-    height: 280px;
-  }
-  
+@media (max-width: 700px) {
+ 
   .wheel {
-    width: 250px;
-    height: 250px;
+    width: 400px;
+    height: 400px;
   }
   
   .wheel-center {
@@ -264,13 +262,13 @@
   }
   
   .wheel-wrapper {
-    width: 220px;
-    height: 220px;
+    width: 400px;
+    height: 400px;
   }
   
   .wheel {
-    width: 200px;
-    height: 200px;
+    width: 400px;
+    height: 400px;
   }
   
   .wheel-center {

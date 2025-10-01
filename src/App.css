@@ -36,6 +36,7 @@
   border: 3px solid rgba(255, 215, 0, 0.4);
   box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2);
   transition: all 0.3s ease;
+  min-width: 120px;
 }
 
 .balance-label {
@@ -45,7 +46,7 @@
 }
 
 .balance-amount {
-  font-size: 1.8rem;
+  font-size: 1rem;
   font-weight: bold;
   color: #ffd700;
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
@@ -122,6 +123,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 600;
+  max-width: 100px;
 }
 
 .amount-btn:hover {
@@ -613,6 +615,7 @@
 .bet-cell {
   flex: 1;
   height: 40px;
+  max-width: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -635,7 +638,7 @@
 .bet-cell.number {
   background: #ffffff;
   color: #000000;
-  min-width: 40px;
+  min-width: 20px;
 }
 
 .bet-cell.number.red {

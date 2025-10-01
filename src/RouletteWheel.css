@@ -258,7 +258,7 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 1000px) {
   .roulette-wheel-container {
     padding: 1rem;
   }

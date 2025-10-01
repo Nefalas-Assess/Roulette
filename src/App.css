@@ -92,8 +92,7 @@
   border-radius: 10px;
   text-align: center;
   width: 100%;
-  max-width: 650px; /* Adjust as needed */
-  margin-bottom: 1rem; /* Space between timer and wheel */
+  min-height: 115px;
 }
 
 .spinning-message {
@@ -502,17 +501,16 @@
 }
 
 .reward-btn {
-  width: 100%;
-  padding: 1rem;
-  margin-bottom: 1rem;
+  padding: 0.8rem 1.2rem;
   background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
   color: #ffffff;
   border: none;
   border-radius: 10px;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
 .reward-btn:hover:not(:disabled) {
@@ -663,11 +661,30 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
 .header-right {
   display: flex;
   align-items: center;
-  gap: 1rem; /* Espace entre les éléments du header-right */
+  gap: 1rem;
 }
 
 .balance-display {
-  text-align: right; /* Aligner le texte à droite */
+  text-align: center; /* Centrer le texte */
+}
+
+.test-btn {
+  padding: 0.8rem 1.2rem;
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.test-btn:hover {
+  background: linear-gradient(135deg, #f7931e 0%, #e67e22 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
 }
 
   .balance-display {

@@ -296,7 +296,6 @@ function App() {
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1>🎰 Roulette Américaine</h1>
         <div className="header-right">
           <div className="balance-display">
             <span className="balance-amount">{balance} 🪙</span>
@@ -307,6 +306,16 @@ function App() {
             disabled={!canWatchAd}
           >
             📺 Regarder une pub (50 🪙)
+          </button>
+          <button 
+            className="test-btn"
+            onClick={() => {
+              wallet.addBalance(10000);
+              setBalance(wallet.getBalance());
+              setMessage('🧪 Test: 10000 jetons ajoutés !');
+            }}
+          >
+            🧪 Test +10k
           </button>
         </div>
       </header>

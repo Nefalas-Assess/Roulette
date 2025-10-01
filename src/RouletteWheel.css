@@ -12,8 +12,8 @@
 
 .wheel-wrapper {
   position: relative;
-  width: 400px; /* Réduit de 350px */
-  height: 400px; /* Réduit de 350px */
+  width: 410px; /* Réduit de 350px */
+  height: 410px; /* Réduit de 350px */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -42,8 +42,8 @@
 
 .wheel {
   position: relative;
-  width: 400px; /* Réduit de 300px */
-  height: 400px; /* Réduit de 300px */
+  width: 410px;
+  height: 410px;
   border-radius: 100%;
   background: radial-gradient(circle, #2c2c2c 0%, #1a1a1a 100%);
   box-shadow: 
@@ -100,7 +100,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 5;
+
   box-shadow: 
     0 0 15px rgba(0, 0, 0, 0.8),
     inset 0 0 10px rgba(255, 255, 255, 0.1);
@@ -131,7 +131,7 @@
   justify-content: center;
   font-weight: bold;
   font-size: 0.8rem;
-  transform-origin: 50% 115px; /* Ajusté pour la nouvelle taille de la roue (230px de diamètre, donc 115px de rayon) */
+  transform-origin: 50% 115px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
   top: 25%;

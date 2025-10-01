@@ -91,7 +91,7 @@
   border-radius: 10px;
   text-align: center;
   width: 100%;
-  max-width: 614px; /* Adjust as needed */
+  max-width: 650px; /* Adjust as needed */
   margin-bottom: 1rem; /* Space between timer and wheel */
 }
 
@@ -125,7 +125,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   overflow-y: auto;
   max-height: calc(100vh - 140px);
-  width: 648px; /* Largeur combinée de all-numbers-row (540px) + dozen-row (100px) + gap (8px) */
+  width: 680px; /* Largeur combinée de all-numbers-row (540px) + dozen-row (100px) + gap (8px) */
 }
 
 .betting-section h2 {
@@ -589,10 +589,13 @@
   background-color: #28a745;
 }
 
-.bet-cell.dozen, .bet-cell.simple-chance {
+.bet-cell.dozen {
   font-size: 0.8rem;
-  padding: 0.2rem;
   height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques */
+}
+
+.bet-cell.simple-chance {
+height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques */
 }
 
 .bet-cell.red-diamond {
@@ -619,7 +622,7 @@
   flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si l'espace est insuffisant */
   justify-content: flex-start; /* Aligner les numéros au début */
   gap: 0.2rem; /* Espacement entre les cellules */
-  max-width: 540px;
+  width: 540px;
 }
 
 .roulette-row.all-numbers-row .bet-cell {
@@ -638,7 +641,7 @@
 }
 
 /* Media Queries pour la responsivité */
-@media (max-width: 768px) {
+@media (width: 700px) {
   .app-main {
     grid-template-columns: 1fr; /* Une seule colonne sur mobile */
   }

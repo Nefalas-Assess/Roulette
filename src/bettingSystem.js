@@ -116,6 +116,20 @@ export class BettingManager {
         return [...this.currentBets];
     }
 
+    getLastBetType() {
+        if (this.currentBets.length > 0) {
+            return this.currentBets[this.currentBets.length - 1].type;
+        }
+        return null;
+    }
+
+    getLastBetValue() {
+        if (this.currentBets.length > 0) {
+            return this.currentBets[this.currentBets.length - 1].value;
+        }
+        return null;
+    }
+
     getTotalBetAmount() {
         return this.currentBets.reduce((total, bet) => total + bet.amount, 0);
     }

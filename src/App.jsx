@@ -159,8 +159,7 @@ function App() {
       setBalance(wallet.getBalance());
 
       // Statistiques pour les succès
-      achievementSystem.recordSpin(spinResult.number, netProfit);
-      const unlockedAchievements = achievementSystem.checkAchievements();
+      const unlockedAchievements = achievementSystem.recordSpin(spinResult.number, netProfit, bettingManager.getLastBetType(), bettingManager.getLastBetValue());
       if (unlockedAchievements.length > 0) {
         setAchievements(prev => [...prev, ...unlockedAchievements]);
       }
@@ -216,6 +215,11 @@ function App() {
     });
   };
 
+  // Fonction utilitaire pour vérifier si un pari est actif sur une cellule donnée
+  const hasActiveBet = (betType, betValue) => {
+    return activeBets.some(bet => bet.type === betType && bet.value === betValue);
+  };
+
   // Fonction utilitaire pour formater les types de paris
   const formatBetDisplay = (type, value) => {
     if (type === 'STRAIGHT_UP') {
@@ -235,14 +239,14 @@ function App() {
     return labels[value] || value;
   };
 
-  const renderBettingTable = () => {
+  const renderBettingTable = (activeBets) => {
     const tableLayout = [];
 
     // Row for 0 and 00
     tableLayout.push(
       <div key="zero-row" className="roulette-row zero-row">
-        <div className="bet-cell zero" onClick={() => handlePlaceBet('STRAIGHT_UP', 0)}>0</div>
-        <div className="bet-cell double-zero" onClick={() => handlePlaceBet('STRAIGHT_UP', '00')}>00</div>
+        <div className="bet-cell zero" onClick={() => handlePlaceBet('STRAIGHT_UP', 0)}>0{hasActiveBet('STRAIGHT_UP', 0) && <div className="bet-indicator"></div>}</div>
+        <div className="bet-cell double-zero" onClick={() => handlePlaceBet('STRAIGHT_UP', '00')}>00{hasActiveBet('STRAIGHT_UP', '00') && <div className="bet-indicator"></div>}</div>
       </div>
     );
 
@@ -261,6 +265,7 @@ function App() {
               onClick={() => handlePlaceBet('STRAIGHT_UP', num)}
             >
               {num}
+              {hasActiveBet('STRAIGHT_UP', num) && <div className="bet-indicator"></div>}
             </div>
           );
         }
@@ -271,21 +276,21 @@ function App() {
     // Outside bets (1st 12, 2nd 12, 3rd 12)
     tableLayout.push(
       <div key="dozen-row" className="roulette-row dozen-row">
-        <div className="bet-cell dozen" onClick={() => handlePlaceBet('DOZEN', 'FIRST_DOZEN')}>1st 12</div>
-        <div className="bet-cell dozen" onClick={() => handlePlaceBet('DOZEN', 'SECOND_DOZEN')}>2nd 12</div>
-        <div className="bet-cell dozen" onClick={() => handlePlaceBet('DOZEN', 'THIRD_DOZEN')}>3rd 12</div>
+        <div className="bet-cell dozen" onClick={() => handlePlaceBet('DOZEN', 'FIRST_DOZEN')}>1st 12{hasActiveBet('DOZEN', 'FIRST_DOZEN') && <div className="bet-indicator"></div>}</div>
+        <div className="bet-cell dozen" onClick={() => handlePlaceBet('DOZEN', 'SECOND_DOZEN')}>2nd 12{hasActiveBet('DOZEN', 'SECOND_DOZEN') && <div className="bet-indicator"></div>}</div>
+        <div className="bet-cell dozen" onClick={() => handlePlaceBet('DOZEN', 'THIRD_DOZEN')}>3rd 12{hasActiveBet('DOZEN', 'THIRD_DOZEN') && <div className="bet-indicator"></div>}</div>
       </div>
     );
 
     // Simple chances (1-18, Even, Red, Black, Odd, 19-36)
     tableLayout.push(
       <div key="simple-chance-row" className="roulette-row simple-chance-row">
-        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('LOW', 'LOW')}>1-18</div>
-        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('EVEN', 'EVEN')}>EVEN</div>
-        <div className="bet-cell simple-chance red-diamond" onClick={() => handlePlaceBet('RED', 'RED')}>♦</div>
-        <div className="bet-cell simple-chance black-diamond" onClick={() => handlePlaceBet('BLACK', 'BLACK')}>♠</div>
-        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('ODD', 'ODD')}>ODD</div>
-        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('HIGH', 'HIGH')}>19-36</div>
+        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('LOW', 'LOW')}>1-18{hasActiveBet('LOW', 'LOW') && <div className="bet-indicator"></div>}</div>
+        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('EVEN', 'EVEN')}>EVEN{hasActiveBet('EVEN', 'EVEN') && <div className="bet-indicator"></div>}</div>
+        <div className="bet-cell simple-chance red-diamond" onClick={() => handlePlaceBet('RED', 'RED')}>♦{hasActiveBet('RED', 'RED') && <div className="bet-indicator"></div>}</div>
+        <div className="bet-cell simple-chance black-diamond" onClick={() => handlePlaceBet('BLACK', 'BLACK')}>♠{hasActiveBet('BLACK', 'BLACK') && <div className="bet-indicator"></div>}</div>
+        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('ODD', 'ODD')}>ODD{hasActiveBet('ODD', 'ODD') && <div className="bet-indicator"></div>}</div>
+        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('HIGH', 'HIGH')}>19-36{hasActiveBet('HIGH', 'HIGH') && <div className="bet-indicator"></div>}</div>
       </div>
     );
 
@@ -298,7 +303,6 @@ function App() {
         <h1>🎰 Roulette Américaine</h1>
         <div className="header-right">
           <div className="balance-display">
-            <span className="balance-label">Solde:</span>
             <span className="balance-amount">{balance} 🪙</span>
           </div>
           <button 
@@ -319,6 +323,20 @@ function App() {
             result={result}
             winningNumber={winningNumber}
           />
+          {/* Affichage du timer automatique */}
+          <div className="timer-display">
+            {isSpinning ? (
+              <div className="spinning-message">🎰 La roue tourne...</div>
+            ) : (
+              <div className="countdown-timer">
+                <div className="timer-label">Prochaine partie dans :</div>
+                <div className="timer-value">{timeUntilSpin}s</div>
+                {activeBets.length === 0 && (
+                  <div className="timer-note">Placez vos paris !</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Section de pari */}
@@ -342,55 +360,11 @@ function App() {
           </div>
 
           {/* Table de paris cliquable */}
-          {renderBettingTable()}
+          {renderBettingTable(activeBets)}
 
-          {/* Paris actifs */}
-          {activeBets.length > 0 && (
-            <div className="active-bets">
-              <h3>Paris actifs ({activeBets.length})</h3>
-              <div className="bets-list">
-                {activeBets.map((bet) => (
-                  <div key={bet.id} className="bet-item">
-                    <span className="bet-info">
-                      {formatBetDisplay(bet.type, bet.value)} - {bet.amount} 🪙
-                    </span>
-                    <button
-                      className="remove-bet-btn"
-                      onClick={() => handleRemoveBet(bet.id)}
-                      disabled={isSpinning}
-                    >
-                      ❌
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="bets-summary">
-                <p>Total misé: <strong>{bettingManager.getTotalBetAmount()} 🪙</strong></p>
-                <button 
-                  className="clear-bets-btn"
-                  onClick={handleClearBets}
-                  disabled={isSpinning}
-                >
-                  🗑️ Effacer tous
-                </button>
-              </div>
-            </div>
-          )}
 
-          {/* Affichage du timer automatique */}
-          <div className="timer-display">
-            {isSpinning ? (
-              <div className="spinning-message">🎰 La roue tourne...</div>
-            ) : (
-              <div className="countdown-timer">
-                <div className="timer-label">Prochaine partie dans :</div>
-                <div className="timer-value">{timeUntilSpin}s</div>
-                {activeBets.length === 0 && (
-                  <div className="timer-note">Placez vos paris !</div>
-                )}
-              </div>
-            )}
-          </div>
+
+
 
           {/* Message de feedback */}
           {message && (

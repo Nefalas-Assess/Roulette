@@ -72,7 +72,7 @@ const RouletteWheel = ({ isSpinning, result, winningNumber }) => {
                 key={index}
                 className={`wheel-segment ${color}`}
                 style={{
-                  transform: `rotate(${angle}deg) translateY(-140px)`
+                  transform: `rotate(${angle}deg) translateY(-80px)`
                 }}
               >
                 <span className="wheel-number">{num}</span>

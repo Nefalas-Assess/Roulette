@@ -190,22 +190,21 @@ export class AchievementSystem {
         // Optionally, trigger a notification or visual feedback
     }
 
-    recordSpin(winningNumber, netProfit) {
+    recordSpin(winningNumber, netProfit, betType = null, betNumber = null) {
         // Créer un objet gameResult pour les vérifications d'achievements
         const gameResult = {
             winningNumber: winningNumber,
             profit: netProfit,
-            totalBetAmount: Math.abs(netProfit) // Approximation basée sur le profit net
+            totalBetAmount: Math.abs(netProfit), // Approximation basée sur le profit net
+            betType: betType,
+            betNumber: betNumber
         };
 
         // Mettre à jour les statistiques
         this.updateGameStats(gameResult);
 
-        // Vérifier les achievements
-        this.checkAchievements(gameResult);
-
-        // Retourner les nouveaux achievements débloqués
-        return this.getRecentlyUnlocked();
+        // Vérifier les achievements et retourner ceux qui sont débloqués
+        return this.checkAchievements(gameResult);
     }
 
     getRecentlyUnlocked() {

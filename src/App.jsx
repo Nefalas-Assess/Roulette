@@ -377,22 +377,6 @@ function App() {
           {renderBettingTable(activeBets)}
         </div>
 
-        {/* Résultat du dernier tour */}
-        {lastResult && (
-          <div className="last-result">
-            <h3>Dernier résultat</h3>
-            <div className={`result-number ${lastResult.color}`}>
-              {lastResult.number}
-            </div>
-            <p>Couleur: {lastResult.color === 'red' ? '🔴 Rouge' : lastResult.color === 'black' ? '⚫ Noir' : '🟢 Vert'}</p>
-            <p>Gains: {lastResult.winnings} 🪙</p>
-            <p className={lastResult.netProfit >= 0 ? 'profit' : 'loss'}>
-              {lastResult.netProfit >= 0 ? '📈' : '📉'} 
-              {' '}Résultat net: {lastResult.netProfit} 🪙
-            </p>
-          </div>
-        )}
-
         {/* Succès débloqués */}
         {achievements.length > 0 && (
           <div className="achievements-section">

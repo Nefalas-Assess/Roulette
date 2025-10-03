@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import RouletteWheel from './RouletteWheel';
 import { spinWheel } from './rouletteLogic';
 import { WalletSystem } from './walletSystem';
@@ -21,8 +21,7 @@ function App() {
   // États du jeu
   const [balance, setBalance] = useState(wallet.getBalance());
   const [isSpinning, setIsSpinning] = useState(false);
-  const [result, setResult] = useState(null);
-  const [winningNumber, setWinningNumber] = useState(null);
+  const [spinResult, setSpinResult] = useState(null);
   
   // États pour le système automatique
   const [timeUntilSpin, setTimeUntilSpin] = useState(30);
@@ -40,6 +39,9 @@ function App() {
   const [achievements, setAchievements] = useState([]);
   const [canClaimHourly, setCanClaimHourly] = useState(true);
   const [canWatchAd, setCanWatchAd] = useState(true);
+
+  // Ref pour éviter les doubles appels
+  const spinTimeoutRef = useRef(null);
 
   // Chargement initial
   useEffect(() => {
@@ -60,7 +62,7 @@ function App() {
             if (bets.length > 0) {
               handleAutoSpin();
             }
-            return 30; // Reset le timer
+            return 30;
           }
           return prev - 1;
         });
@@ -72,21 +74,29 @@ function App() {
     };
   }, [isSpinning, canBet]);
 
+  // Cleanup lors du démontage
+  useEffect(() => {
+    return () => {
+      if (spinTimeoutRef.current) {
+        clearTimeout(spinTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Vérification des timers pour les récompenses
   const checkTimers = () => {
     const now = Date.now();
     const lastHourlyClaim = parseInt(localStorage.getItem('lastHourlyClaim') || '0');
     const lastAdWatch = parseInt(localStorage.getItem('lastAdWatch') || '0');
     
-    setCanClaimHourly(now - lastHourlyClaim > 3600000); // 1 heure
-    setCanWatchAd(now - lastAdWatch > 300000); // 5 minutes
+    setCanClaimHourly(now - lastHourlyClaim > 3600000);
+    setCanWatchAd(now - lastAdWatch > 300000);
   };
 
   // Fonction pour ajouter un pari
   const handlePlaceBet = (betType, betValue, amount = selectedAmount) => {
     if (isSpinning || !canBet) return;
 
-    // Validation du solde
     const validation = wallet.validateTransaction(amount);
     if (!validation.valid) {
       setMessage(`❌ ${validation.reason}`);
@@ -95,16 +105,11 @@ function App() {
 
     try {
       bettingManager.addBet(betType, betValue, amount);
-      
-      // Déduction du solde
       wallet.deductBalance(amount);
       setBalance(wallet.getBalance());
-      
-      // Mise à jour de l'affichage
       setActiveBets(bettingManager.getBets());
       setMessage(`✅ Pari ajouté : ${formatBetDisplay(betType, betValue)} (${amount} jetons)`);
       console.log(`[LOG] Pari ajouté: Type=${betType}, Valeur=${betValue}, Montant=${amount}, Solde actuel=${wallet.getBalance()}`);
-      
     } catch (error) {
       setMessage(`❌ ${error.message}`);
     }
@@ -133,13 +138,17 @@ function App() {
     console.log(`[LOG] Tous les paris effacés. Montant remboursé: ${totalRefund}, Solde actuel=${wallet.getBalance()}`);
   };
 
-  // Fonction automatique de spin - CORRIGÉE
+  // Fonction automatique de spin - PROTECTION CONTRE DOUBLE APPEL
   const handleAutoSpin = () => {
-    if (isSpinning) return;
+    // Protection contre les doubles appels
+    if (isSpinning || spinTimeoutRef.current) {
+      console.log('[LOG] Spin déjà en cours, appel ignoré');
+      return;
+    }
 
     const bets = bettingManager.getBets();
     if (bets.length === 0) {
-      setTimeUntilSpin(30); // Reset le timer si pas de paris
+      setTimeUntilSpin(30);
       return;
     }
 
@@ -148,15 +157,14 @@ function App() {
     setMessage("🎰 La roue tourne...");
     console.log(`[LOG] Début du spin. Paris actifs: ${JSON.stringify(bets)}`);
 
-    // Générer le résultat et le passer IMMÉDIATEMENT au composant RouletteWheel
-    const spinResult = spinWheel();
-    setResult(spinResult);
-    setWinningNumber(spinResult.number);
+    // Générer UN SEUL résultat
+    const result = spinWheel();
+    setSpinResult(result);
     
-    // Attendre la fin de l'animation (10 secondes) avant de calculer les gains
-    setTimeout(() => {
+    // Stocker la référence du timeout
+    spinTimeoutRef.current = setTimeout(() => {
       // Calcul des gains
-      const winnings = bettingManager.calculateTotalWinnings(spinResult.number);
+      const winnings = bettingManager.calculateTotalWinnings(result.number);
       const totalBet = bettingManager.getTotalBetAmount();
       const netProfit = winnings - totalBet;
 
@@ -172,12 +180,12 @@ function App() {
       setBalance(wallet.getBalance());
 
       // Statistiques pour les succès
-      const unlockedAchievements = achievementSystem.recordSpin(spinResult.number, netProfit, bettingManager.getLastBetType(), bettingManager.getLastBetValue());
+      const unlockedAchievements = achievementSystem.recordSpin(result.number, netProfit, bettingManager.getLastBetType(), bettingManager.getLastBetValue());
       if (unlockedAchievements && unlockedAchievements.length > 0) {
         setAchievements(prev => [...prev, ...unlockedAchievements]);
       }
 
-      console.log(`[LOG] Résultat du spin: Numéro=${spinResult.number}, Couleur=${spinResult.color}`);
+      console.log(`[LOG] Résultat du spin: Numéro=${result.number}, Couleur=${result.color}`);
       console.log(`[LOG] Gains calculés: Total des gains=${winnings}, Profit net=${netProfit}, Solde final=${wallet.getBalance()}`);
 
       // Message de résultat
@@ -191,20 +199,21 @@ function App() {
 
       // Sauvegarde du résultat
       setLastResult({
-        number: spinResult.number,
-        color: spinResult.color,
+        number: result.number,
+        color: result.color,
         winnings: winnings,
         netProfit: netProfit,
         bets: [...bets]
       });
 
-      // Nettoyage des paris et reset du système
+      // Nettoyage
       bettingManager.clearBets();
       setActiveBets([]);
       setIsSpinning(false);
       setCanBet(true);
-      setTimeUntilSpin(30); // Reset le timer pour la prochaine partie
-    }, 10000); // 10 secondes d'animation
+      setTimeUntilSpin(30);
+      spinTimeoutRef.current = null;
+    }, 10000);
   };
 
   // Récompense publicitaire
@@ -224,14 +233,13 @@ function App() {
       setCanWatchAd(false);
       localStorage.setItem('lastAdWatch', Date.now().toString());
       setMessage(`🎬 Merci ! Vous avez reçu ${reward} jetons !`);
-      
       setTimeout(() => setCanWatchAd(true), 300000);
     }).catch(error => {
       setMessage(`❌ ${error.message}`);
     });
   };
 
-  // Fonction utilitaire pour vérifier si un pari est actif sur une cellule donnée
+  // Fonction utilitaire pour vérifier si un pari est actif
   const hasActiveBet = (betType, betValue) => {
     return activeBets.some(bet => bet.type === betType && bet.value === betValue);
   };
@@ -258,7 +266,6 @@ function App() {
   const renderBettingTable = (activeBets) => {
     const tableLayout = [];
 
-    // Row for 0 and 00
     tableLayout.push(
       <div key="zero-row" className="roulette-row zero-row">
         <div className="bet-cell zero" onClick={() => handlePlaceBet('STRAIGHT_UP', 0)}>0{hasActiveBet('STRAIGHT_UP', 0) && <div className="bet-indicator"></div>}</div>
@@ -266,7 +273,6 @@ function App() {
       </div>
     );
 
-    // Main numbers 1-36 (all in one row)
     const allNumbers = [];
     for (let i = 1; i <= 36; i++) {
       const isRed = RED_NUMBERS.includes(i);
@@ -293,7 +299,6 @@ function App() {
       </div>
     );
 
-    // Simple chances (1-18, Even, Red, Black, Odd, 19-36)
     tableLayout.push(
       <div key="simple-chance-row" className="roulette-row simple-chance-row">
         <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('LOW', 'LOW')}>1-18{hasActiveBet('LOW', 'LOW') && <div className="bet-indicator"></div>}</div>
@@ -341,18 +346,15 @@ function App() {
       </header>
 
       <main className="app-main">
-        {/* Section de la roue */}
         <div className="wheel-section">
           <RouletteWheel 
             isSpinning={isSpinning}
-            result={result}
-            winningNumber={winningNumber}
+            result={spinResult}
+            winningNumber={spinResult?.number}
           />
         </div>
 
-        {/* Section de pari */}
         <div className="betting-section">
-          {/* Sélection du montant */}
           <div className="amount-selector">
             <div className="timer-display-container">
               <div className="timer-display">
@@ -390,11 +392,9 @@ function App() {
             </div>
           </div>
 
-          {/* Table de paris cliquable */}
           {renderBettingTable(activeBets)}
         </div>
 
-        {/* Succès débloqués */}
         {achievements.length > 0 && (
           <div className="achievements-section">
             <h3>🏆 Succès débloqués</h3>

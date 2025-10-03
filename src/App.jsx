@@ -100,6 +100,7 @@ function App() {
       // Mise à jour de l'affichage
       setActiveBets(bettingManager.getBets());
       setMessage(`✅ Pari ajouté : ${formatBetDisplay(betType, betValue)} (${amount} jetons)`);
+      console.log(`[LOG] Pari ajouté: Type=${betType}, Valeur=${betValue}, Montant=${amount}, Solde actuel=${wallet.getBalance()}`);
       
     } catch (error) {
       setMessage(`❌ ${error.message}`);
@@ -114,6 +115,7 @@ function App() {
       setBalance(wallet.getBalance());
       setActiveBets(bettingManager.getBets());
       setMessage(`🔄 Pari retiré : ${removedBet.amount} jetons remboursés`);
+      console.log(`[LOG] Pari retiré: Type=${removedBet.type}, Valeur=${removedBet.value}, Montant=${removedBet.amount}, Solde actuel=${wallet.getBalance()}`);
     }
   };
 
@@ -125,6 +127,7 @@ function App() {
     setBalance(wallet.getBalance());
     setActiveBets([]);
     setMessage(`🔄 Tous les paris effacés : ${totalRefund} jetons remboursés`);
+    console.log(`[LOG] Tous les paris effacés. Montant remboursé: ${totalRefund}, Solde actuel=${wallet.getBalance()}`);
   };
 
   // Fonction automatique de spin
@@ -139,7 +142,8 @@ function App() {
 
     setIsSpinning(true);
     setCanBet(false);
-    setMessage('🎰 La roue tourne...');
+    setMessage("🎰 La roue tourne...");
+    console.log(`[LOG] Début du spin. Paris actifs: ${JSON.stringify(bets)}`);
 
     // Simulation du spin
     const spinResult = spinWheel();
@@ -164,6 +168,9 @@ function App() {
       if (unlockedAchievements && unlockedAchievements.length > 0) {
         setAchievements(prev => [...prev, ...unlockedAchievements]);
       }
+
+      console.log(`[LOG] Résultat du spin: Numéro=${spinResult.number}, Couleur=${spinResult.color}`);
+      console.log(`[LOG] Gains calculés: Total des gains=${winnings}, Profit net=${netProfit}, Solde final=${wallet.getBalance()}`);
 
       // Message de résultat
       if (netProfit > 0) {

@@ -98,7 +98,7 @@ export class BettingManager {
 
         const newBet = new Bet(type, value, amount, numbersCovered);
         this.currentBets.push(newBet);
-        console.log(`Pari ajouté: ${type} sur ${value} pour ${amount}`);
+        console.log(`[LOG - BettingManager] Pari ajouté: Type=${type}, Valeur=${value}, Montant=${amount}`);
         return newBet;
     }
 
@@ -106,7 +106,7 @@ export class BettingManager {
         const index = this.currentBets.findIndex(bet => bet.id === id);
         if (index > -1) {
             const removedBet = this.currentBets.splice(index, 1)[0];
-            console.log(`Pari retiré: ${removedBet.type} sur ${removedBet.value} pour ${removedBet.amount}`);
+            console.log(`[LOG - BettingManager] Pari retiré: Type=${removedBet.type}, Valeur=${removedBet.value}, Montant=${removedBet.amount}`);
             return removedBet;
         }
         return null;
@@ -141,7 +141,7 @@ export class BettingManager {
                 // Pour ALL_IN, le payout est basé sur le type de pari sous-jacent (ici, RED)
                 const payoutRatio = BET_TYPES[bet.type].payout;
                 totalWinnings += bet.amount * (payoutRatio + 1); // +1 pour récupérer la mise initiale
-                console.log(`Pari gagnant: ${bet.type} pour ${bet.amount}. Gains: ${bet.amount * (payoutRatio + 1)}`);
+                console.log(`[LOG - BettingManager] Pari gagnant: Type=${bet.type}, Valeur=${bet.value}, Montant=${bet.amount}, Payout=${payoutRatio + 1}, Gains=${bet.amount * (payoutRatio + 1)}`);
             }
         });
         return totalWinnings;
@@ -149,7 +149,7 @@ export class BettingManager {
 
     clearBets() {
         this.currentBets = [];
-        console.log('Tous les paris effacés.');
+        console.log("[LOG - BettingManager] Tous les paris effacés.");
     }
 }
 

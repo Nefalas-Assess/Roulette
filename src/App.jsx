@@ -42,6 +42,7 @@ function App() {
 
   // Ref pour éviter les doubles appels
   const spinTimeoutRef = useRef(null);
+  const isSpinningRef = useRef(false);
 
   // Chargement initial
   useEffect(() => {
@@ -53,20 +54,26 @@ function App() {
   useEffect(() => {
     let interval;
     
-    if (!isSpinning && canBet) {
+    // Ne démarrer le timer que si aucun spin n'est en cours
+    if (!isSpinning && !isSpinningRef.current && canBet) {
       interval = setInterval(() => {
         setTimeUntilSpin(prev => {
           if (prev <= 1) {
-            // Lancer automatiquement si il y a des paris
-            const bets = bettingManager.getBets();
-            if (bets.length > 0) {
-              handleAutoSpin();
+            // Vérifier à nouveau avant de lancer
+            if (!isSpinningRef.current && !isSpinning) {
+              const bets = bettingManager.getBets();
+              if (bets.length > 0) {
+                handleAutoSpin();
+              }
             }
             return 30;
           }
           return prev - 1;
         });
       }, 1000);
+    } else {
+      // Si un spin est en cours, réinitialiser le timer
+      setTimeUntilSpin(30);
     }
 
     return () => {
@@ -93,7 +100,7 @@ function App() {
     setCanWatchAd(now - lastAdWatch > 300000);
   };
 
-  // Fonction pour ajouter un pari
+  // Fonction pour ajouter un pari (NE PLUS DÉBITER ICI)
   const handlePlaceBet = (betType, betValue, amount = selectedAmount) => {
     if (isSpinning || !canBet) return;
 
@@ -105,8 +112,7 @@ function App() {
 
     try {
       bettingManager.addBet(betType, betValue, amount);
-      wallet.deductBalance(amount);
-      setBalance(wallet.getBalance());
+      // NE PLUS DÉBITER LE SOLDE ICI
       setActiveBets(bettingManager.getBets());
       setMessage(`✅ Pari ajouté : ${formatBetDisplay(betType, betValue)} (${amount} jetons)`);
       console.log(`[LOG] Pari ajouté: Type=${betType}, Valeur=${betValue}, Montant=${amount}, Solde actuel=${wallet.getBalance()}`);
@@ -115,33 +121,31 @@ function App() {
     }
   };
 
-  // Fonction pour retirer un pari
+  // Fonction pour retirer un pari (NE PLUS REMBOURSER ICI)
   const handleRemoveBet = (betId) => {
     const removedBet = bettingManager.removeBet(betId);
     if (removedBet) {
-      wallet.addBalance(removedBet.amount);
-      setBalance(wallet.getBalance());
+      // NE PLUS REMBOURSER LE SOLDE ICI
       setActiveBets(bettingManager.getBets());
-      setMessage(`🔄 Pari retiré : ${removedBet.amount} jetons remboursés`);
+      setMessage(`🔄 Pari retiré : ${removedBet.amount} jetons`);
       console.log(`[LOG] Pari retiré: Type=${removedBet.type}, Valeur=${removedBet.value}, Montant=${removedBet.amount}, Solde actuel=${wallet.getBalance()}`);
     }
   };
 
-  // Fonction pour effacer tous les paris
+  // Fonction pour effacer tous les paris (NE PLUS REMBOURSER ICI)
   const handleClearBets = () => {
     const totalRefund = bettingManager.getTotalBetAmount();
     bettingManager.clearBets();
-    wallet.addBalance(totalRefund);
-    setBalance(wallet.getBalance());
+    // NE PLUS REMBOURSER LE SOLDE ICI
     setActiveBets([]);
-    setMessage(`🔄 Tous les paris effacés : ${totalRefund} jetons remboursés`);
-    console.log(`[LOG] Tous les paris effacés. Montant remboursé: ${totalRefund}, Solde actuel=${wallet.getBalance()}`);
+    setMessage(`🔄 Tous les paris effacés`);
+    console.log(`[LOG] Tous les paris effacés. Solde actuel=${wallet.getBalance()}`);
   };
 
-  // Fonction automatique de spin - PROTECTION CONTRE DOUBLE APPEL
+  // Fonction automatique de spin - PROTECTION RENFORCÉE
   const handleAutoSpin = () => {
-    // Protection contre les doubles appels
-    if (isSpinning || spinTimeoutRef.current) {
+    // PROTECTION DOUBLE CONTRE LES APPELS MULTIPLES
+    if (isSpinningRef.current || isSpinning) {
       console.log('[LOG] Spin déjà en cours, appel ignoré');
       return;
     }
@@ -152,10 +156,27 @@ function App() {
       return;
     }
 
+    // Vérifier le solde AVANT de débiter
+    const totalBet = bettingManager.getTotalBetAmount();
+    const validation = wallet.validateTransaction(totalBet);
+    if (!validation.valid) {
+      setMessage(`❌ ${validation.reason}`);
+      bettingManager.clearBets();
+      setActiveBets([]);
+      return;
+    }
+
+    // MARQUER LE SPIN COMME EN COURS IMMÉDIATEMENT
+    isSpinningRef.current = true;
     setIsSpinning(true);
     setCanBet(false);
     setMessage("🎰 La roue tourne...");
     console.log(`[LOG] Début du spin. Paris actifs: ${JSON.stringify(bets)}`);
+
+    // DÉBITER LE SOLDE MAINTENANT
+    wallet.deductBalance(totalBet);
+    setBalance(wallet.getBalance());
+    console.log(`[LOG] Solde débité: ${totalBet} jetons, Nouveau solde: ${wallet.getBalance()}`);
 
     // Générer UN SEUL résultat
     const result = spinWheel();
@@ -165,13 +186,14 @@ function App() {
     spinTimeoutRef.current = setTimeout(() => {
       // Calcul des gains
       const winnings = bettingManager.calculateTotalWinnings(result.number);
-      const totalBet = bettingManager.getTotalBetAmount();
       const netProfit = winnings - totalBet;
 
-      // Mise à jour du solde
+      // AJOUTER LES GAINS SI IL Y EN A
       if (winnings > 0) {
         wallet.addBalance(winnings);
+        console.log(`[LOG] Gains ajoutés: ${winnings} jetons`);
       }
+      
       setTotalProfitLoss(prev => {
         const newProfitLoss = prev + netProfit;
         localStorage.setItem("totalProfitLoss", newProfitLoss.toString());
@@ -209,6 +231,7 @@ function App() {
       // Nettoyage
       bettingManager.clearBets();
       setActiveBets([]);
+      isSpinningRef.current = false;
       setIsSpinning(false);
       setCanBet(true);
       setTimeUntilSpin(30);
@@ -366,6 +389,9 @@ function App() {
                     <div className="timer-value">{timeUntilSpin}s</div>
                     {activeBets.length === 0 && (
                       <div className="timer-note">Placez vos paris !</div>
+                    )}
+                    {activeBets.length > 0 && (
+                      <div className="timer-note">Total misé : {bettingManager.getTotalBetAmount()} 🪙</div>
                     )}
                   </div>
                 )}

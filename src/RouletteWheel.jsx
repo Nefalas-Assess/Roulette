@@ -21,6 +21,9 @@ const RouletteWheel = ({ isSpinning, result, winningNumber }) => {
   // Effet pour l'animation du spin
   useEffect(() => {
     if (isSpinning && result) {
+      // Cacher immédiatement l'ancien résultat quand un nouveau spin commence
+      setDisplayNumber(null);
+      
       // Calculer l'angle cible basé sur le numéro gagnant
       const targetIndex = wheelNumbers.indexOf(result.number);
       const degreesPerNumber = 360 / wheelNumbers.length;
@@ -31,17 +34,16 @@ const RouletteWheel = ({ isSpinning, result, winningNumber }) => {
       const finalRotation = extraRotations + (360 - targetAngle);
       
       setRotation(finalRotation);
-      setDisplayNumber(null);
       
-      // Afficher le numéro gagnant après l'animation
+      // Afficher le numéro gagnant après l'animation (10 secondes)
       setTimeout(() => {
         setDisplayNumber(result.number);
       }, 10000);
     }
   }, [isSpinning, result]);
 
-  // Utiliser winningNumber comme fallback si result n'est pas disponible
-  const currentNumber = displayNumber !== null ? displayNumber : winningNumber;
+  // N'afficher que displayNumber (qui sera null pendant le spin et le bon numéro après)
+  const currentNumber = displayNumber;
 
   return (
     <div className="roulette-wheel-container">

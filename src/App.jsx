@@ -133,7 +133,7 @@ function App() {
     console.log(`[LOG] Tous les paris effacés. Montant remboursé: ${totalRefund}, Solde actuel=${wallet.getBalance()}`);
   };
 
-  // Fonction automatique de spin
+  // Fonction automatique de spin - CORRIGÉE
   const handleAutoSpin = () => {
     if (isSpinning) return;
 
@@ -148,13 +148,13 @@ function App() {
     setMessage("🎰 La roue tourne...");
     console.log(`[LOG] Début du spin. Paris actifs: ${JSON.stringify(bets)}`);
 
-    // Simulation du spin
+    // Générer le résultat et le passer IMMÉDIATEMENT au composant RouletteWheel
     const spinResult = spinWheel();
+    setResult(spinResult);
+    setWinningNumber(spinResult.number);
     
+    // Attendre la fin de l'animation (10 secondes) avant de calculer les gains
     setTimeout(() => {
-      setResult(spinResult);
-      setWinningNumber(spinResult.number);
-
       // Calcul des gains
       const winnings = bettingManager.calculateTotalWinnings(spinResult.number);
       const totalBet = bettingManager.getTotalBetAmount();
@@ -341,9 +341,6 @@ function App() {
       </header>
 
       <main className="app-main">
-        {/* Affichage du timer automatique (déplacé au-dessus de la roue) */}
-
-
         {/* Section de la roue */}
         <div className="wheel-section">
           <RouletteWheel 
@@ -357,21 +354,21 @@ function App() {
         <div className="betting-section">
           {/* Sélection du montant */}
           <div className="amount-selector">
-                    <div className="timer-display-container">
-          <div className="timer-display">
-            {isSpinning ? (
-              <div className="spinning-message">🎰 La roue tourne...</div>
-            ) : (
-              <div className="countdown-timer">
-                <div className="timer-label">Prochaine partie dans :</div>
-                <div className="timer-value">{timeUntilSpin}s</div>
-                {activeBets.length === 0 && (
-                  <div className="timer-note">Placez vos paris !</div>
+            <div className="timer-display-container">
+              <div className="timer-display">
+                {isSpinning ? (
+                  <div className="spinning-message">🎰 La roue tourne...</div>
+                ) : (
+                  <div className="countdown-timer">
+                    <div className="timer-label">Prochaine partie dans :</div>
+                    <div className="timer-value">{timeUntilSpin}s</div>
+                    {activeBets.length === 0 && (
+                      <div className="timer-note">Placez vos paris !</div>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
             <div className="amount-buttons">
               {BET_AMOUNTS.map(amount => (
                 <button

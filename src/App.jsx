@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import RouletteWheel from './RouletteWheel';
 import { spinWheel } from './rouletteLogic';
@@ -14,6 +13,10 @@ function App() {
   const [bettingManager] = useState(() => new BettingManager());
   const [achievementSystem] = useState(() => new AchievementSystem());
   const [adSystem] = useState(() => new AdSystem());
+  const [totalProfitLoss, setTotalProfitLoss] = useState(() => {
+    const savedProfitLoss = localStorage.getItem('totalProfitLoss');
+    return savedProfitLoss ? parseInt(savedProfitLoss) : 0;
+  });
 
   // États du jeu
   const [balance, setBalance] = useState(wallet.getBalance());
@@ -161,6 +164,11 @@ function App() {
       if (winnings > 0) {
         wallet.addBalance(winnings);
       }
+      setTotalProfitLoss(prev => {
+        const newProfitLoss = prev + netProfit;
+        localStorage.setItem("totalProfitLoss", newProfitLoss.toString());
+        return newProfitLoss;
+      });
       setBalance(wallet.getBalance());
 
       // Statistiques pour les succès
@@ -307,6 +315,11 @@ function App() {
           <div className="balance-display">
             <span className="balance-amount">{balance} 🪙</span>
           </div>
+          <div className="profit-loss-display">
+            <span className="profit-loss-amount" style={{ color: totalProfitLoss >= 0 ? 'green' : 'red' }}>
+              P&L: {totalProfitLoss} 🪙
+            </span>
+          </div>
           <button 
             className="reward-btn ad-btn"
             onClick={handleWatchAd}
@@ -404,4 +417,3 @@ function App() {
 }
 
 export default App;
-

@@ -605,15 +605,93 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
   background-color: #000000;
 }
 
+/* Styles pour les indicateurs de mise avec montant */
 .bet-indicator {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  width: 15px;
-  height: 15px;
-  background-color: #ffd700; /* Gold color for indicator */
-  border-radius: 50%;
-  border: 2px solid #1a1a2e;
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    background-color: #ffd700;
+    border-radius: 50%;
+    border: 2px solid #1a1a2e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #1a1a2e;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.bet-amount {
+    font-size: 0.6rem;
+    line-height: 1;
+}
+
+/* Amélioration de l'affichage des paris actifs */
+.bet-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 0.5rem;
+}
+
+.bet-info {
+    font-weight: 600;
+    flex: 1;
+}
+
+.bet-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.bet-action-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.bet-action-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.bet-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Tooltip pour les cases de pari */
+.bet-cell {
+    position: relative;
+    cursor: pointer;
+}
+
+.bet-cell:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
 }
 
 /* Styles spécifiques pour la nouvelle ligne de numéros */

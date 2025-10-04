@@ -5,6 +5,8 @@ import { WalletSystem } from './walletSystem';
 import { BettingManager, BET_TYPES, BET_AMOUNTS, BETTING_AREAS, RED_NUMBERS, BLACK_NUMBERS } from './bettingSystem';
 import { AchievementSystem } from './achievementSystem';
 import { AdSystem } from './adSystem';
+import HistoryModal from './HistoryModal';
+import AchievementsModal from './AchievementsModal';
 import './App.css';
 
 function App() {
@@ -134,7 +136,21 @@ function App() {
     setCanWatchAd(now - lastAdWatch > 300000);
   };
 
-  // Fonction pour ajouter un pari
+  // Fonction utilitaire pour obtenir le montant d'un pari spécifique (SOLUTION DE SECOURS)
+  const getBetAmount = (betType, betValue) => {
+    // Vérifier si la méthode existe, sinon utiliser une solution alternative
+    if (typeof bettingManager.getBetAmount === 'function') {
+      return bettingManager.getBetAmount(betType, betValue);
+    } else {
+      // Solution alternative : parcourir les paris manuellement
+      const bet = bettingManager.getBets().find(bet => 
+        bet.type === betType && bet.value === betValue
+      );
+      return bet ? bet.amount : 0;
+    }
+  };
+
+  // Fonction pour ajouter un pari (MODIFIÉE POUR MISES MULTIPLES)
   const handlePlaceBet = (betType, betValue, amount = selectedAmount) => {
     if (isSpinning || !canBet) return;
 
@@ -145,10 +161,28 @@ function App() {
     }
 
     try {
-      bettingManager.addBet(betType, betValue, amount);
+      // Vérifier s'il existe déjà un pari du même type et valeur
+      const existingBets = bettingManager.getBets();
+      const existingBetIndex = existingBets.findIndex(bet => 
+        bet.type === betType && bet.value === betValue
+      );
+
+      if (existingBetIndex > -1) {
+        // Si le pari existe déjà, créer un nouveau pari séparé pour la même case
+        // Cela permet d'avoir plusieurs paris sur la même case
+        bettingManager.addBet(betType, betValue, amount);
+      } else {
+        // Créer un nouveau pari
+        bettingManager.addBet(betType, betValue, amount);
+      }
+      
       setActiveBets(bettingManager.getBets());
-      setMessage(`✅ Pari ajouté : ${formatBetDisplay(betType, betValue)} (${amount} jetons)`);
-      console.log(`[LOG] Pari ajouté: Type=${betType}, Valeur=${betValue}, Montant=${amount}, Solde actuel=${wallet.getBalance()}`);
+      
+      // Obtenir le montant total misé sur ce pari spécifique
+      const totalBetOnThis = getBetAmount(betType, betValue);
+      setMessage(`✅ Pari ajouté : ${formatBetDisplay(betType, betValue)} (${totalBetOnThis} jetons au total)`);
+      
+      console.log(`[LOG] Pari ajouté: Type=${betType}, Valeur=${betValue}, Montant=${amount}, Total sur ce pari=${totalBetOnThis}, Solde actuel=${wallet.getBalance()}`);
     } catch (error) {
       setMessage(`❌ ${error.message}`);
     }
@@ -161,6 +195,30 @@ function App() {
       setActiveBets(bettingManager.getBets());
       setMessage(`🔄 Pari retiré : ${removedBet.amount} jetons`);
       console.log(`[LOG] Pari retiré: Type=${removedBet.type}, Valeur=${removedBet.value}, Montant=${removedBet.amount}, Solde actuel=${wallet.getBalance()}`);
+    }
+  };
+
+  // Fonction pour réduire un pari (NOUVELLE FONCTION)
+  const handleReduceBet = (betType, betValue, amount = selectedAmount) => {
+    if (isSpinning || !canBet) return;
+
+    // Solution alternative puisque bettingManager.reduceBet n'existe pas
+    const existingBets = bettingManager.getBets();
+    const betToReduce = existingBets.find(bet => 
+      bet.type === betType && bet.value === betValue
+    );
+
+    if (betToReduce) {
+      if (betToReduce.amount > amount) {
+        // Réduire le montant du pari
+        betToReduce.amount -= amount;
+        setActiveBets([...existingBets]); // Forcer le re-render
+        const totalBetOnThis = getBetAmount(betType, betValue);
+        setMessage(`🔽 Pari réduit : ${formatBetDisplay(betType, betValue)} (${totalBetOnThis} jetons restants)`);
+      } else {
+        // Supprimer le pari si le montant à retirer est >= au montant actuel
+        handleRemoveBet(betToReduce.id);
+      }
     }
   };
 
@@ -340,212 +398,35 @@ function App() {
     setShowAdButton(!showAdButton);
   };
 
-  // Composant Modal pour les Achievements
-  const AchievementsModal = () => {
-    if (!showAchievementsModal) return null;
-
-    return (
-      <div className="modal-overlay" onClick={() => setShowAchievementsModal(false)}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <div className="modal-header">
-            <h3>🏆 Achievements</h3>
-            <button 
-              className="modal-close"
-              onClick={() => setShowAchievementsModal(false)}
-            >
-              ✕
-            </button>
-          </div>
-          <div className="achievements-list">
-            {allAchievements.map((achievement, index) => (
-              <div 
-                key={achievement.id} 
-                className={`achievement-item ${achievement.unlocked ? 'unlocked' : 'locked'}`}
-              >
-                <div className="achievement-icon">
-                  {achievement.unlocked ? achievement.icon : '🔒'}
-                </div>
-                <div className="achievement-info">
-                  <h4>{achievement.name}</h4>
-                  <p>{achievement.description}</p>
-                  <span className="achievement-category">{achievement.category}</span>
-                </div>
-                <div className="achievement-status">
-                  {achievement.unlocked ? '✅ Débloqué' : '🔒 Verrouillé'}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Composant Modal pour l'Historique
-  const HistoryModal = () => {
-    if (!showHistoryModal) return null;
-
-    const totalProfit = gameHistory.reduce((sum, game) => sum + game.netProfit, 0);
-    const totalGames = gameHistory.length;
-    const wins = gameHistory.filter(game => game.netProfit > 0).length;
-    const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) : 0;
-
-    return (
-      <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <div className="modal-header">
-            <h3>📊 Historique des Parties</h3>
-            <button 
-              className="modal-close"
-              onClick={() => setShowHistoryModal(false)}
-            >
-              ✕
-            </button>
-          </div>
-          
-          {/* Statistiques résumées */}
-          <div className="history-stats" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '1rem',
-            marginBottom: '1.5rem',
-            padding: '1rem',
-            background: 'rgba(255,255,255,0.05)',
-            borderRadius: '10px'
-          }}>
-            <div className="stat-item">
-              <div style={{ fontSize: '0.8rem', color: '#ffd700' }}>Total Parties</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{totalGames}</div>
-            </div>
-            <div className="stat-item">
-              <div style={{ fontSize: '0.8rem', color: '#ffd700' }}>Taux de Victoire</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{winRate}%</div>
-            </div>
-            <div className="stat-item">
-              <div style={{ fontSize: '0.8rem', color: '#ffd700' }}>Profit/Perte Total</div>
-              <div style={{ 
-                fontSize: '1.5rem', 
-                fontWeight: 'bold',
-                color: totalProfit >= 0 ? '#28a745' : '#dc143c'
-              }}>
-                {totalProfit >= 0 ? '+' : ''}{totalProfit} 🪙
-              </div>
-            </div>
-            <div className="stat-item">
-              <div style={{ fontSize: '0.8rem', color: '#ffd700' }}>Victoires</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#28a745' }}>{wins}</div>
-            </div>
-          </div>
-
-          {/* Liste des parties */}
-          <div className="history-list" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            {gameHistory.length === 0 ? (
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '2rem', 
-                color: '#888',
-                fontStyle: 'italic'
-              }}>
-                Aucune partie enregistrée
-              </div>
-            ) : (
-              gameHistory.map((game) => (
-                <div 
-                  key={game.id}
-                  className="history-item"
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '0.75rem',
-                    marginBottom: '0.5rem',
-                    background: 'rgba(255,255,255,0.05)',
-                    borderRadius: '8px',
-                    borderLeft: `4px solid ${
-                      game.netProfit > 0 ? '#28a745' : 
-                      game.netProfit < 0 ? '#dc143c' : '#ffd700'
-                    }`
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div 
-                      className={`result-chip ${game.color}`}
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 'bold',
-                        color: 'white',
-                        background: game.color === 'red' ? '#dc143c' : 
-                                  game.color === 'black' ? '#000000' : '#28a745'
-                      }}
-                    >
-                      {game.number}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>
-                        {game.timestamp}
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#aaa' }}>
-                        Mise: {game.totalBet} 🪙
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ 
-                      fontSize: '1.1rem', 
-                      fontWeight: 'bold',
-                      color: game.netProfit > 0 ? '#28a745' : 
-                            game.netProfit < 0 ? '#dc143c' : '#ffd700'
-                    }}>
-                      {game.netProfit > 0 ? '+' : ''}{game.netProfit} 🪙
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: '#aaa' }}>
-                      Gains: {game.winnings} 🪙
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Bouton pour effacer l'historique */}
-          {gameHistory.length > 0 && (
-            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-              <button
-                className="clear-bets-btn"
-                onClick={() => {
-                  setGameHistory([]);
-                  localStorage.removeItem('gameHistory');
-                }}
-                style={{
-                  background: 'rgba(220, 20, 60, 0.3)',
-                  border: '1px solid #dc143c',
-                  color: '#ffffff',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '5px',
-                  cursor: 'pointer'
-                }}
-              >
-                🗑️ Effacer l'historique
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   const renderBettingTable = (activeBets) => {
     const tableLayout = [];
 
     tableLayout.push(
       <div key="zero-row" className="roulette-row zero-row">
-        <div className="bet-cell zero" onClick={() => handlePlaceBet('STRAIGHT_UP', 0)}>0{hasActiveBet('STRAIGHT_UP', 0) && <div className="bet-indicator"></div>}</div>
-        <div className="bet-cell double-zero" onClick={() => handlePlaceBet('STRAIGHT_UP', '00')}>00{hasActiveBet('STRAIGHT_UP', '00') && <div className="bet-indicator"></div>}</div>
+        <div 
+          className="bet-cell zero" 
+          onClick={() => handlePlaceBet('STRAIGHT_UP', 0)}
+          title={`Total misé: ${getBetAmount('STRAIGHT_UP', 0)} jetons`}
+        >
+          0
+          {getBetAmount('STRAIGHT_UP', 0) > 0 && (
+            <div className="bet-indicator">
+              <span className="bet-amount">{getBetAmount('STRAIGHT_UP', 0)}</span>
+            </div>
+          )}
+        </div>
+        <div 
+          className="bet-cell double-zero" 
+          onClick={() => handlePlaceBet('STRAIGHT_UP', '00')}
+          title={`Total misé: ${getBetAmount('STRAIGHT_UP', '00')} jetons`}
+        >
+          00
+          {getBetAmount('STRAIGHT_UP', '00') > 0 && (
+            <div className="bet-indicator">
+              <span className="bet-amount">{getBetAmount('STRAIGHT_UP', '00')}</span>
+            </div>
+          )}
+        </div>
       </div>
     );
 
@@ -553,14 +434,21 @@ function App() {
     for (let i = 1; i <= 36; i++) {
       const isRed = RED_NUMBERS.includes(i);
       const isBlack = BLACK_NUMBERS.includes(i);
+      const betAmount = getBetAmount('STRAIGHT_UP', i);
+      
       allNumbers.push(
         <div 
           key={i}
           className={`bet-cell number ${isRed ? 'red' : ''} ${isBlack ? 'black' : ''}`}
           onClick={() => handlePlaceBet('STRAIGHT_UP', i)}
+          title={`Total misé: ${betAmount} jetons`}
         >
           {i}
-          {hasActiveBet('STRAIGHT_UP', i) && <div className="bet-indicator"></div>}
+          {betAmount > 0 && (
+            <div className="bet-indicator">
+              <span className="bet-amount">{betAmount}</span>
+            </div>
+          )}
         </div>
       );
     }
@@ -568,21 +456,120 @@ function App() {
       <div key="main-betting-area" className="main-betting-area">
         <div className="roulette-row all-numbers-row">{allNumbers}</div>
         <div className="roulette-row dozen-row">
-          <div className="bet-cell dozen" onClick={() => handlePlaceBet("DOZEN", "FIRST_DOZEN")}>1st 12{hasActiveBet("DOZEN", "FIRST_DOZEN") && <div className="bet-indicator"></div>}</div>
-          <div className="bet-cell dozen" onClick={() => handlePlaceBet("DOZEN", "SECOND_DOZEN")}>2nd 12{hasActiveBet("DOZEN", "SECOND_DOZEN") && <div className="bet-indicator"></div>}</div>
-          <div className="bet-cell dozen" onClick={() => handlePlaceBet("DOZEN", "THIRD_DOZEN")}>3rd 12{hasActiveBet("DOZEN", "THIRD_DOZEN") && <div className="bet-indicator"></div>}</div>
+          <div 
+            className="bet-cell dozen" 
+            onClick={() => handlePlaceBet("DOZEN", "FIRST_DOZEN")}
+            title={`Total misé: ${getBetAmount("DOZEN", "FIRST_DOZEN")} jetons`}
+          >
+            1st 12
+            {getBetAmount("DOZEN", "FIRST_DOZEN") > 0 && (
+              <div className="bet-indicator">
+                <span className="bet-amount">{getBetAmount("DOZEN", "FIRST_DOZEN")}</span>
+              </div>
+            )}
+          </div>
+          <div 
+            className="bet-cell dozen" 
+            onClick={() => handlePlaceBet("DOZEN", "SECOND_DOZEN")}
+            title={`Total misé: ${getBetAmount("DOZEN", "SECOND_DOZEN")} jetons`}
+          >
+            2nd 12
+            {getBetAmount("DOZEN", "SECOND_DOZEN") > 0 && (
+              <div className="bet-indicator">
+                <span className="bet-amount">{getBetAmount("DOZEN", "SECOND_DOZEN")}</span>
+              </div>
+            )}
+          </div>
+          <div 
+            className="bet-cell dozen" 
+            onClick={() => handlePlaceBet("DOZEN", "THIRD_DOZEN")}
+            title={`Total misé: ${getBetAmount("DOZEN", "THIRD_DOZEN")} jetons`}
+          >
+            3rd 12
+            {getBetAmount("DOZEN", "THIRD_DOZEN") > 0 && (
+              <div className="bet-indicator">
+                <span className="bet-amount">{getBetAmount("DOZEN", "THIRD_DOZEN")}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
 
     tableLayout.push(
       <div key="simple-chance-row" className="roulette-row simple-chance-row">
-        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('LOW', 'LOW')}>1-18{hasActiveBet('LOW', 'LOW') && <div className="bet-indicator"></div>}</div>
-        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('EVEN', 'EVEN')}>EVEN{hasActiveBet('EVEN', 'EVEN') && <div className="bet-indicator"></div>}</div>
-        <div className="bet-cell simple-chance red-diamond" onClick={() => handlePlaceBet('RED', 'RED')}>♦{hasActiveBet('RED', 'RED') && <div className="bet-indicator"></div>}</div>
-        <div className="bet-cell simple-chance black-diamond" onClick={() => handlePlaceBet('BLACK', 'BLACK')}>♠{hasActiveBet('BLACK', 'BLACK') && <div className="bet-indicator"></div>}</div>
-        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('ODD', 'ODD')}>ODD{hasActiveBet('ODD', 'ODD') && <div className="bet-indicator"></div>}</div>
-        <div className="bet-cell simple-chance" onClick={() => handlePlaceBet('HIGH', 'HIGH')}>19-36{hasActiveBet('HIGH', 'HIGH') && <div className="bet-indicator"></div>}</div>
+        <div 
+          className="bet-cell simple-chance" 
+          onClick={() => handlePlaceBet('LOW', 'LOW')}
+          title={`Total misé: ${getBetAmount('LOW', 'LOW')} jetons`}
+        >
+          1-18
+          {getBetAmount('LOW', 'LOW') > 0 && (
+            <div className="bet-indicator">
+              <span className="bet-amount">{getBetAmount('LOW', 'LOW')}</span>
+            </div>
+          )}
+        </div>
+        <div 
+          className="bet-cell simple-chance" 
+          onClick={() => handlePlaceBet('EVEN', 'EVEN')}
+          title={`Total misé: ${getBetAmount('EVEN', 'EVEN')} jetons`}
+        >
+          EVEN
+          {getBetAmount('EVEN', 'EVEN') > 0 && (
+            <div className="bet-indicator">
+              <span className="bet-amount">{getBetAmount('EVEN', 'EVEN')}</span>
+            </div>
+          )}
+        </div>
+        <div 
+          className="bet-cell simple-chance red-diamond" 
+          onClick={() => handlePlaceBet('RED', 'RED')}
+          title={`Total misé: ${getBetAmount('RED', 'RED')} jetons`}
+        >
+          ♦
+          {getBetAmount('RED', 'RED') > 0 && (
+            <div className="bet-indicator">
+              <span className="bet-amount">{getBetAmount('RED', 'RED')}</span>
+            </div>
+          )}
+        </div>
+        <div 
+          className="bet-cell simple-chance black-diamond" 
+          onClick={() => handlePlaceBet('BLACK', 'BLACK')}
+          title={`Total misé: ${getBetAmount('BLACK', 'BLACK')} jetons`}
+        >
+          ♠
+          {getBetAmount('BLACK', 'BLACK') > 0 && (
+            <div className="bet-indicator">
+              <span className="bet-amount">{getBetAmount('BLACK', 'BLACK')}</span>
+            </div>
+          )}
+        </div>
+        <div 
+          className="bet-cell simple-chance" 
+          onClick={() => handlePlaceBet('ODD', 'ODD')}
+          title={`Total misé: ${getBetAmount('ODD', 'ODD')} jetons`}
+        >
+          ODD
+          {getBetAmount('ODD', 'ODD') > 0 && (
+            <div className="bet-indicator">
+              <span className="bet-amount">{getBetAmount('ODD', 'ODD')}</span>
+            </div>
+          )}
+        </div>
+        <div 
+          className="bet-cell simple-chance" 
+          onClick={() => handlePlaceBet('HIGH', 'HIGH')}
+          title={`Total misé: ${getBetAmount('HIGH', 'HIGH')} jetons`}
+        >
+          19-36
+          {getBetAmount('HIGH', 'HIGH') > 0 && (
+            <div className="bet-indicator">
+              <span className="bet-amount">{getBetAmount('HIGH', 'HIGH')}</span>
+            </div>
+          )}
+        </div>
       </div>
     );
 
@@ -709,13 +696,24 @@ function App() {
                     <div className="bet-info">
                       {formatBetDisplay(bet.type, bet.value)} - {bet.amount} 🪙
                     </div>
-                    <button 
-                      className="remove-bet-btn"
-                      onClick={() => handleRemoveBet(bet.id)}
-                      disabled={isSpinning}
-                    >
-                      ✕
-                    </button>
+                    <div className="bet-actions">
+                      <button 
+                        className="bet-action-btn"
+                        onClick={() => handleReduceBet(bet.type, bet.value, selectedAmount)}
+                        disabled={isSpinning || bet.amount < selectedAmount}
+                        title={`Retirer ${selectedAmount} jetons`}
+                      >
+                        -{selectedAmount}
+                      </button>
+                      <button 
+                        className="remove-bet-btn"
+                        onClick={() => handleRemoveBet(bet.id)}
+                        disabled={isSpinning}
+                        title="Retirer complètement"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -735,10 +733,19 @@ function App() {
       </main>
 
       {/* Modal des Achievements */}
-      <AchievementsModal />
+      <AchievementsModal 
+        showAchievementsModal={showAchievementsModal}
+        setShowAchievementsModal={setShowAchievementsModal}
+        allAchievements={allAchievements}
+      />
 
       {/* Modal Historique */}
-      <HistoryModal />
+      <HistoryModal 
+        showHistoryModal={showHistoryModal}
+        setShowHistoryModal={setShowHistoryModal}
+        gameHistory={gameHistory}
+        setGameHistory={setGameHistory}
+      />
     </div>
   );
 }

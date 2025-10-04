@@ -1,4 +1,4 @@
-// Advanced betting system for roulette game
+// bettingSystem.js - Advanced betting system for roulette game
 
 /**
  * Available bet amounts
@@ -83,7 +83,7 @@ export class BettingManager {
         if (!BET_TYPES[type]) {
             throw new Error(`Type de pari invalide: ${type}`);
         }
-        if (!BET_AMOUNTS.includes(amount)) {
+        if (!BET_AMOUNTS.includes(amount) && amount !== 'all-in') {
             throw new Error(`Montant de pari invalide: ${amount}`);
         }
 
@@ -96,10 +96,23 @@ export class BettingManager {
             throw new Error(`Impossible de déterminer les numéros couverts pour le pari: ${type} sur ${value}`);
         }
 
-        const newBet = new Bet(type, value, amount, numbersCovered);
-        this.currentBets.push(newBet);
-        console.log(`[LOG - BettingManager] Pari ajouté: Type=${type}, Valeur=${value}, Montant=${amount}`);
-        return newBet;
+        // Vérifier s'il existe déjà un pari du même type et valeur
+        const existingBetIndex = this.currentBets.findIndex(bet => 
+            bet.type === type && bet.value === value
+        );
+
+        if (existingBetIndex > -1) {
+            // Augmenter le montant du pari existant
+            this.currentBets[existingBetIndex].amount += amount;
+            console.log(`[LOG - BettingManager] Pari augmenté: Type=${type}, Valeur=${value}, Nouveau montant=${this.currentBets[existingBetIndex].amount}`);
+            return this.currentBets[existingBetIndex];
+        } else {
+            // Créer un nouveau pari
+            const newBet = new Bet(type, value, amount, numbersCovered);
+            this.currentBets.push(newBet);
+            console.log(`[LOG - BettingManager] Pari ajouté: Type=${type}, Valeur=${value}, Montant=${amount}`);
+            return newBet;
+        }
     }
 
     removeBet(id) {
@@ -112,8 +125,34 @@ export class BettingManager {
         return null;
     }
 
+    // Nouvelle méthode pour retirer un montant spécifique d'un pari
+    reduceBet(type, value, amount) {
+        const existingBetIndex = this.currentBets.findIndex(bet => 
+            bet.type === type && bet.value === value
+        );
+
+        if (existingBetIndex > -1) {
+            const bet = this.currentBets[existingBetIndex];
+            if (bet.amount > amount) {
+                // Réduire le montant du pari
+                bet.amount -= amount;
+                console.log(`[LOG - BettingManager] Pari réduit: Type=${type}, Valeur=${value}, Nouveau montant=${bet.amount}`);
+                return bet;
+            } else {
+                // Supprimer le pari si le montant à retirer est >= au montant actuel
+                return this.removeBet(bet.id);
+            }
+        }
+        return null;
+    }
+
     getBets() {
         return [...this.currentBets];
+    }
+
+    getBetAmount(type, value) {
+        const bet = this.currentBets.find(bet => bet.type === type && bet.value === value);
+        return bet ? bet.amount : 0;
     }
 
     getLastBetType() {
@@ -158,4 +197,3 @@ export default BettingManager;
 
 // Also exporting a named instance for convenience, if needed elsewhere
 export const bettingManager = new BettingManager();
-

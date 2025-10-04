@@ -148,7 +148,7 @@
 
 .amount-buttons {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
   margin: 10px 0;
 }
@@ -162,7 +162,6 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 600;
-  max-width: 100px;
 }
 
 .amount-btn:hover:not(:disabled) {

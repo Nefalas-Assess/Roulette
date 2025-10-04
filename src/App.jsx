@@ -40,7 +40,6 @@ function App() {
   // États des succès et publicités
   const [achievements, setAchievements] = useState([]);
   const [canClaimHourly, setCanClaimHourly] = useState(true);
-  const [canWatchAd, setCanWatchAd] = useState(true);
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
   const [allAchievements, setAllAchievements] = useState([]);
 
@@ -126,14 +125,20 @@ function App() {
     };
   }, []);
 
-  // Vérification des timers pour les récompenses
+  // Vérification des timers pour les récompenses - VERSION AMÉLIORÉE
   const checkTimers = () => {
     const now = Date.now();
     const lastHourlyClaim = parseInt(localStorage.getItem('lastHourlyClaim') || '0');
-    const lastAdWatch = parseInt(localStorage.getItem('lastAdWatch') || '0');
+    
+    // CRÉDIT AUTOMATIQUE DES JETONS HORAIRES
+    if (now - lastHourlyClaim > 3600000) {
+      const reward = wallet.claimHourlyReward();
+      setBalance(wallet.getBalance());
+      localStorage.setItem('lastHourlyClaim', now.toString());
+      setMessage(`⏰ Récompense horaire automatique : +${reward} jetons !`);
+    }
     
     setCanClaimHourly(now - lastHourlyClaim > 3600000);
-    setCanWatchAd(now - lastAdWatch > 300000);
   };
 
   // Fonction utilitaire pour obtenir le montant d'un pari spécifique (SOLUTION DE SECOURS)
@@ -362,22 +367,15 @@ function App() {
 
   // Récompense publicitaire
   const handleWatchAd = () => {
-    if (!canWatchAd) {
-      setMessage('📺 Publicité déjà vue. Attendez 5 minutes.');
-      return;
-    }
-
     setMessage('📺 Chargement de la publicité...');
     
     // Simulation de publicité
     setTimeout(() => {
       const reward = wallet.claimAdReward();
       setBalance(wallet.getBalance());
-      setCanWatchAd(false);
-      localStorage.setItem('lastAdWatch', Date.now().toString());
       setMessage(`🎬 Merci ! Vous avez reçu ${reward} jetons !`);
       setShowAdButton(false); // Cacher le bouton après utilisation
-      setTimeout(() => setCanWatchAd(true), 300000);
+      // PLUS de délai de 5 minutes !
     }, 2000);
   };
 
@@ -619,9 +617,9 @@ function App() {
               <button 
                 className="ad-btn dropdown"
                 onClick={handleWatchAd}
-                disabled={!canWatchAd}
+                // PLUS de disabled={!canWatchAd}
               >
-                📺 Regarder une pub (50 🪙)
+                📺 Regarder une pub (500 🪙)
               </button>
             )}
           </div>

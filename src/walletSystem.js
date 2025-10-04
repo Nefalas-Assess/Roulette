@@ -1,6 +1,6 @@
 // walletSystem.js
 class WalletSystem {
-  constructor(initialBalance = 1000) {
+  constructor(initialBalance = 10000) {
     this.balance = initialBalance;
     this.loadBalance();
   }
@@ -45,14 +45,14 @@ class WalletSystem {
     return { valid: true };
   }
 
-  claimHourlyReward() {
-    const reward = 100;
+claimHourlyReward() {
+    const reward = 1000;
     this.addBalance(reward);
     return reward;
   }
 
   claimAdReward() {
-    const reward = 50;
+    const reward = 500;
     this.addBalance(reward);
     return reward;
   }

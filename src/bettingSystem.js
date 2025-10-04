@@ -83,8 +83,16 @@ export class BettingManager {
         if (!BET_TYPES[type]) {
             throw new Error(`Type de pari invalide: ${type}`);
         }
-        if (!BET_AMOUNTS.includes(amount) && amount !== 'all-in') {
+        
+        // MODIFICATION : Accepter les montants personnalisés (pourcentages)
+        // Vérifier que c'est un nombre valide et positif
+        if (typeof amount !== 'number' || amount <= 0 || !Number.isInteger(amount)) {
             throw new Error(`Montant de pari invalide: ${amount}`);
+        }
+        
+        // Optionnel : Vérifier que le montant n'est pas trop élevé (par exemple, max 10 000)
+        if (amount > 10000) {
+            throw new Error(`Montant de pari trop élevé: ${amount} (maximum: 10 000)`);
         }
 
         let numbersCovered = [];
@@ -127,6 +135,11 @@ export class BettingManager {
 
     // Nouvelle méthode pour retirer un montant spécifique d'un pari
     reduceBet(type, value, amount) {
+        // Même validation que pour addBet
+        if (typeof amount !== 'number' || amount <= 0 || !Number.isInteger(amount)) {
+            throw new Error(`Montant de réduction invalide: ${amount}`);
+        }
+
         const existingBetIndex = this.currentBets.findIndex(bet => 
             bet.type === type && bet.value === value
         );

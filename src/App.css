@@ -147,12 +147,10 @@
 }
 
 .amount-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center; /* Centrer les boutons */
-  gap: 0.8rem; /* Espacement entre les boutons */
-  max-width: 540px;
-  margin: 0 auto; /* Centrer le conteneur des boutons */
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 10px 0;
 }
 
 .amount-btn {
@@ -167,7 +165,7 @@
   max-width: 100px;
 }
 
-.amount-btn:hover {
+.amount-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
 }
@@ -177,6 +175,31 @@
   color: #1a1a2e;
   border-color: #ffd700;
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+.amount-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Styles pour les boutons de pourcentage */
+.percentage-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white;
+  font-weight: bold;
+}
+
+.percentage-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
+  transform: translateY(-2px);
+}
+
+.all-in-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+}
+
+.all-in-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%) !important;
 }
 
 .bet-type-selector {
@@ -719,7 +742,11 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
 }
 
 /* Media Queries pour la responsivité */
-@media (width: 700px) {
+@media (max-width: 768px) {
+  .amount-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
   .app-main {
     grid-template-columns: 1fr; /* Une seule colonne sur mobile */
   }
@@ -1154,4 +1181,3 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
 .balance-display {
   display: none;
 }
-

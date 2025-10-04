@@ -154,6 +154,12 @@ function App() {
   const handlePlaceBet = (betType, betValue, amount = selectedAmount) => {
     if (isSpinning || !canBet) return;
 
+    // MODIFICATION : Validation du montant avant de continuer
+    if (amount <= 0 || !Number.isInteger(amount)) {
+      setMessage(`❌ Montant de pari invalide: ${amount}`);
+      return;
+    }
+
     const validation = wallet.validateTransaction(amount);
     if (!validation.valid) {
       setMessage(`❌ ${validation.reason}`);
@@ -201,6 +207,12 @@ function App() {
   // Fonction pour réduire un pari (NOUVELLE FONCTION)
   const handleReduceBet = (betType, betValue, amount = selectedAmount) => {
     if (isSpinning || !canBet) return;
+
+    // MODIFICATION : Validation du montant
+    if (amount <= 0 || !Number.isInteger(amount)) {
+      setMessage(`❌ Montant de réduction invalide: ${amount}`);
+      return;
+    }
 
     // Solution alternative puisque bettingManager.reduceBet n'existe pas
     const existingBets = bettingManager.getBets();
@@ -673,13 +685,43 @@ function App() {
                   {amount} 🪙
                 </button>
               ))}
+              {/* NOUVEAUX BOUTONS DE POURCENTAGE - VERSION CORRIGÉE */}
               <button
-                key="all-in"
-                className={`amount-btn ${selectedAmount === balance ? 'selected' : ''}`}
-                onClick={() => setSelectedAmount(balance)}
+                className="amount-btn percentage-btn"
+                onClick={() => {
+                  const tenPercent = Math.max(1, Math.floor(balance * 0.1));
+                  setSelectedAmount(tenPercent);
+                }}
                 disabled={balance === 0 || isSpinning}
               >
-                All in 🪙
+                10%
+              </button>
+              <button
+                className="amount-btn percentage-btn"
+                onClick={() => {
+                  const twentyFivePercent = Math.max(1, Math.floor(balance * 0.25));
+                  setSelectedAmount(twentyFivePercent);
+                }}
+                disabled={balance === 0 || isSpinning}
+              >
+                25%
+              </button>
+              <button
+                className="amount-btn percentage-btn"
+                onClick={() => {
+                  const fiftyPercent = Math.max(1, Math.floor(balance * 0.5));
+                  setSelectedAmount(fiftyPercent);
+                }}
+                disabled={balance === 0 || isSpinning}
+              >
+                50%
+              </button>
+              <button
+                className="amount-btn percentage-btn all-in-btn"
+                onClick={() => setSelectedAmount(Math.max(1, balance))}
+                disabled={balance === 0 || isSpinning}
+              >
+                All in
               </button>
             </div>
           </div>

@@ -20,6 +20,7 @@
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  max-height: 60px;
 }
 
 .app-header h1 {
@@ -30,13 +31,13 @@
 
 .balance-display {
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.1) 100%);
-  padding: 1rem 2rem;
   border-radius: 30px;
   backdrop-filter: blur(15px);
   border: 3px solid rgba(255, 215, 0, 0.4);
   box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2);
   transition: all 0.3s ease;
   min-width: 120px;
+  max-height: 45px;
 }
 
 .balance-label {
@@ -48,7 +49,7 @@
 .balance-amount {
   font-size: 1rem;
   font-weight: bold;
-  color: #ffd700;
+  color: black;
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
   animation: glow 2s ease-in-out infinite alternate;
 }
@@ -124,7 +125,6 @@
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   overflow-y: auto;
-  max-height: 500px;
   width: 680px; /* Largeur combinée de all-numbers-row (540px) + dozen-row (100px) + gap (8px) */
 }
 
@@ -767,4 +767,311 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
 
 .reward-btn, .test-btn {
   white-space: nowrap; /* Empêche le texte de se casser sur plusieurs lignes */
+}
+
+/* Styles pour le bouton Achievements */
+.achievements-btn {
+  padding: 0.8rem 1.2rem;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #1a1a2e;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.achievements-btn:hover {
+  background: linear-gradient(135deg, #ffed4e 0%, #fff9c4 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 15px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h3 {
+  color: #ffd700;
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.modal-close {
+  background: rgba(220, 20, 60, 0.3);
+  border: 1px solid #dc143c;
+  color: #ffffff;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #dc143c;
+  transform: scale(1.1);
+}
+
+/* Achievements List */
+.achievements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.achievement-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.achievement-item.unlocked {
+  border-left: 4px solid #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.achievement-item.locked {
+  border-left: 4px solid #666;
+  opacity: 0.7;
+}
+
+.achievement-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.achievement-icon {
+  font-size: 2rem;
+  width: 50px;
+  text-align: center;
+}
+
+.achievement-info {
+  flex: 1;
+}
+
+.achievement-info h4 {
+  margin: 0 0 0.5rem 0;
+  color: #ffffff;
+  font-size: 1.1rem;
+}
+
+.achievement-info p {
+  margin: 0 0 0.5rem 0;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+}
+
+.achievement-category {
+  font-size: 0.8rem;
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.2);
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+}
+
+.achievement-status {
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 0.3rem 0.8rem;
+  border-radius: 12px;
+}
+
+.achievement-item.unlocked .achievement-status {
+  background: rgba(40, 167, 69, 0.3);
+  color: #28a745;
+  border: 1px solid #28a745;
+}
+
+.achievement-item.locked .achievement-status {
+  background: rgba(108, 117, 125, 0.3);
+  color: #6c757d;
+  border: 1px solid #6c757d;
+}
+
+/* Bouton de spin manuel */
+.manual-spin-btn {
+  margin-top: 1rem !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 1rem;
+    margin: 1rem;
+  }
+  
+  .achievement-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  
+  .achievement-info {
+    text-align: center;
+  }
+  
+  .header-right {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .achievements-btn {
+    order: -1;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Styles pour le nouveau menu de solde */
+.balance-menu-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.balance-btn {
+  padding: 0.8rem 1.2rem;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #1a1a2e;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.balance-btn:hover {
+  background: linear-gradient(135deg, #ffed4e 0%, #fff9c4 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+.balance-amount {
+  font-size: 1rem;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+.ad-btn.dropdown {
+  position: absolute;
+  top: 100%;
+  margin-top: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  z-index: 100;
+  box-shadow: 0 4px 15px rgba(156, 39, 176, 0.4);
+  animation: slideDown 0.3s ease;
+}
+
+.ad-btn.dropdown:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(156, 39, 176, 0.6);
+}
+
+.ad-btn.dropdown:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #6c757d;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ajustement du header pour le nouveau layout */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+}
+
+.history-btn {
+  padding: 0.8rem 1.2rem;
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.history-btn:hover {
+  background: linear-gradient(135deg, #357abd 0%, #2868a8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+}
+
+/* Suppression de l'ancien style balance-display */
+.balance-display {
+  display: none;
 }

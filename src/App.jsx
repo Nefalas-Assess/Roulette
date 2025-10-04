@@ -24,7 +24,7 @@ function App() {
   const [spinResult, setSpinResult] = useState(null);
   
   // États pour le système automatique
-  const [timeUntilSpin, setTimeUntilSpin] = useState(30);
+  const [timeUntilSpin, setTimeUntilSpin] = useState(15);
   const [canBet, setCanBet] = useState(true);
   
   // États des paris
@@ -39,6 +39,18 @@ function App() {
   const [achievements, setAchievements] = useState([]);
   const [canClaimHourly, setCanClaimHourly] = useState(true);
   const [canWatchAd, setCanWatchAd] = useState(true);
+  const [showAchievementsModal, setShowAchievementsModal] = useState(false);
+  const [allAchievements, setAllAchievements] = useState([]);
+
+  // Nouveaux états pour l'historique
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [gameHistory, setGameHistory] = useState(() => {
+    const savedHistory = localStorage.getItem('gameHistory');
+    return savedHistory ? JSON.parse(savedHistory) : [];
+  });
+
+  // Nouvel état pour afficher le bouton de pub
+  const [showAdButton, setShowAdButton] = useState(false);
 
   // Ref pour éviter les doubles appels
   const spinTimeoutRef = useRef(null);
@@ -48,32 +60,54 @@ function App() {
   useEffect(() => {
     setBalance(wallet.getBalance());
     checkTimers();
+    loadAllAchievements();
   }, [wallet]);
 
-  // Système de timer automatique
+  // Charger tous les achievements
+  const loadAllAchievements = () => {
+    const allAchievements = achievementSystem.getAchievements();
+    setAllAchievements(allAchievements);
+  };
+
+  // Fonction pour sauvegarder l'historique
+  const saveGameHistory = (result) => {
+    const newHistory = [{
+      id: Date.now(),
+      number: result.number,
+      color: result.color,
+      timestamp: new Date().toLocaleString(),
+      totalBet: bettingManager.getTotalBetAmount(),
+      winnings: result.winnings || 0,
+      netProfit: result.netProfit || 0,
+      bets: activeBets.map(bet => ({
+        type: bet.type,
+        value: bet.value,
+        amount: bet.amount
+      }))
+    }, ...gameHistory.slice(0, 99)]; // Garder les 100 derniers résultats
+    
+    setGameHistory(newHistory);
+    localStorage.setItem('gameHistory', JSON.stringify(newHistory));
+  };
+
+  // Système de timer automatique - CORRIGÉ
   useEffect(() => {
     let interval;
     
-    // Ne démarrer le timer que si aucun spin n'est en cours
     if (!isSpinning && !isSpinningRef.current && canBet) {
       interval = setInterval(() => {
         setTimeUntilSpin(prev => {
           if (prev <= 1) {
             // Vérifier à nouveau avant de lancer
             if (!isSpinningRef.current && !isSpinning) {
-              const bets = bettingManager.getBets();
-              if (bets.length > 0) {
-                handleAutoSpin();
-              }
+              console.log('[TIMER] Lancement automatique du spin');
+              handleAutoSpin();
             }
-            return 30;
+            return 15;
           }
           return prev - 1;
         });
       }, 1000);
-    } else {
-      // Si un spin est en cours, réinitialiser le timer
-      setTimeUntilSpin(30);
     }
 
     return () => {
@@ -100,7 +134,7 @@ function App() {
     setCanWatchAd(now - lastAdWatch > 300000);
   };
 
-  // Fonction pour ajouter un pari (NE PLUS DÉBITER ICI)
+  // Fonction pour ajouter un pari
   const handlePlaceBet = (betType, betValue, amount = selectedAmount) => {
     if (isSpinning || !canBet) return;
 
@@ -112,7 +146,6 @@ function App() {
 
     try {
       bettingManager.addBet(betType, betValue, amount);
-      // NE PLUS DÉBITER LE SOLDE ICI
       setActiveBets(bettingManager.getBets());
       setMessage(`✅ Pari ajouté : ${formatBetDisplay(betType, betValue)} (${amount} jetons)`);
       console.log(`[LOG] Pari ajouté: Type=${betType}, Valeur=${betValue}, Montant=${amount}, Solde actuel=${wallet.getBalance()}`);
@@ -121,28 +154,25 @@ function App() {
     }
   };
 
-  // Fonction pour retirer un pari (NE PLUS REMBOURSER ICI)
+  // Fonction pour retirer un pari
   const handleRemoveBet = (betId) => {
     const removedBet = bettingManager.removeBet(betId);
     if (removedBet) {
-      // NE PLUS REMBOURSER LE SOLDE ICI
       setActiveBets(bettingManager.getBets());
       setMessage(`🔄 Pari retiré : ${removedBet.amount} jetons`);
       console.log(`[LOG] Pari retiré: Type=${removedBet.type}, Valeur=${removedBet.value}, Montant=${removedBet.amount}, Solde actuel=${wallet.getBalance()}`);
     }
   };
 
-  // Fonction pour effacer tous les paris (NE PLUS REMBOURSER ICI)
+  // Fonction pour effacer tous les paris
   const handleClearBets = () => {
-    const totalRefund = bettingManager.getTotalBetAmount();
     bettingManager.clearBets();
-    // NE PLUS REMBOURSER LE SOLDE ICI
     setActiveBets([]);
     setMessage(`🔄 Tous les paris effacés`);
     console.log(`[LOG] Tous les paris effacés. Solde actuel=${wallet.getBalance()}`);
   };
 
-  // Fonction automatique de spin - PROTECTION RENFORCÉE
+  // FONCTION AUTOMATIQUE DE SPIN - MODIFIÉE
   const handleAutoSpin = () => {
     // PROTECTION DOUBLE CONTRE LES APPELS MULTIPLES
     if (isSpinningRef.current || isSpinning) {
@@ -152,7 +182,8 @@ function App() {
 
     const bets = bettingManager.getBets();
     if (bets.length === 0) {
-      setTimeUntilSpin(30);
+      setTimeUntilSpin(15);
+      setMessage("⏰ Aucun pari placé. Le timer a été réinitialisé.");
       return;
     }
 
@@ -166,11 +197,16 @@ function App() {
       return;
     }
 
+    // Générer le résultat MAINTENANT
+    const result = spinWheel();
+    console.log(`[LOG] Résultat généré: ${result.number} ${result.color}`);
+
     // MARQUER LE SPIN COMME EN COURS IMMÉDIATEMENT
     isSpinningRef.current = true;
     setIsSpinning(true);
     setCanBet(false);
     setMessage("🎰 La roue tourne...");
+    
     console.log(`[LOG] Début du spin. Paris actifs: ${JSON.stringify(bets)}`);
 
     // DÉBITER LE SOLDE MAINTENANT
@@ -178,65 +214,80 @@ function App() {
     setBalance(wallet.getBalance());
     console.log(`[LOG] Solde débité: ${totalBet} jetons, Nouveau solde: ${wallet.getBalance()}`);
 
-    // Générer UN SEUL résultat
-    const result = spinWheel();
-    setSpinResult(result);
-    
     // Stocker la référence du timeout
     spinTimeoutRef.current = setTimeout(() => {
-      // Calcul des gains
-      const winnings = bettingManager.calculateTotalWinnings(result.number);
-      const netProfit = winnings - totalBet;
-
-      // AJOUTER LES GAINS SI IL Y EN A
-      if (winnings > 0) {
-        wallet.addBalance(winnings);
-        console.log(`[LOG] Gains ajoutés: ${winnings} jetons`);
-      }
+      // DÉCLENCHER L'ANIMATION DE LA ROULETTE MAINTENANT
+      setSpinResult(result);
       
-      setTotalProfitLoss(prev => {
-        const newProfitLoss = prev + netProfit;
-        localStorage.setItem("totalProfitLoss", newProfitLoss.toString());
-        return newProfitLoss;
-      });
-      setBalance(wallet.getBalance());
+      // Attendre que l'animation se termine (5 secondes) avant de calculer les gains
+      setTimeout(() => {
+        // Calcul des gains
+        const winnings = bettingManager.calculateTotalWinnings(result.number);
+        const netProfit = winnings - totalBet;
 
-      // Statistiques pour les succès
-      const unlockedAchievements = achievementSystem.recordSpin(result.number, netProfit, bettingManager.getLastBetType(), bettingManager.getLastBetValue());
-      if (unlockedAchievements && unlockedAchievements.length > 0) {
-        setAchievements(prev => [...prev, ...unlockedAchievements]);
-      }
+        // AJOUTER LES GAINS SI IL Y EN A
+        if (winnings > 0) {
+          wallet.addBalance(winnings);
+          console.log(`[LOG] Gains ajoutés: ${winnings} jetons`);
+        }
+        
+        setTotalProfitLoss(prev => {
+          const newProfitLoss = prev + netProfit;
+          localStorage.setItem("totalProfitLoss", newProfitLoss.toString());
+          return newProfitLoss;
+        });
+        setBalance(wallet.getBalance());
 
-      console.log(`[LOG] Résultat du spin: Numéro=${result.number}, Couleur=${result.color}`);
-      console.log(`[LOG] Gains calculés: Total des gains=${winnings}, Profit net=${netProfit}, Solde final=${wallet.getBalance()}`);
+        // Mettre à jour les succès
+        achievementSystem.recordSpin(result.number, netProfit, bettingManager.getLastBetType(), bettingManager.getLastBetValue());
+        
+        // Sauvegarder dans l'historique
+        saveGameHistory({
+          number: result.number,
+          color: result.color,
+          winnings: winnings,
+          netProfit: netProfit
+        });
 
-      // Message de résultat
-      if (netProfit > 0) {
-        setMessage(`🎉 Victoire ! Vous avez gagné ${netProfit} jetons !`);
-      } else if (netProfit === 0) {
-        setMessage(`😐 Égalité ! Aucun gain, aucune perte.`);
-      } else {
-        setMessage(`😢 Perdu ! Vous avez perdu ${Math.abs(netProfit)} jetons.`);
-      }
+        // Recharger les achievements
+        loadAllAchievements();
 
-      // Sauvegarde du résultat
-      setLastResult({
-        number: result.number,
-        color: result.color,
-        winnings: winnings,
-        netProfit: netProfit,
-        bets: [...bets]
-      });
+        console.log(`[LOG] Résultat du spin: Numéro=${result.number}, Couleur=${result.color}`);
+        console.log(`[LOG] Gains calculés: Total des gains=${winnings}, Profit net=${netProfit}, Solde final=${wallet.getBalance()}`);
 
-      // Nettoyage
-      bettingManager.clearBets();
-      setActiveBets([]);
-      isSpinningRef.current = false;
-      setIsSpinning(false);
-      setCanBet(true);
-      setTimeUntilSpin(30);
-      spinTimeoutRef.current = null;
-    }, 10000);
+        // Message de résultat
+        if (netProfit > 0) {
+          setMessage(`🎉 Victoire ! Vous avez gagné ${netProfit} jetons !`);
+        } else if (netProfit === 0) {
+          setMessage(`😐 Égalité ! Aucun gain, aucune perte.`);
+        } else {
+          setMessage(`😢 Perdu ! Vous avez perdu ${Math.abs(netProfit)} jetons.`);
+        }
+
+        // Sauvegarde du résultat
+        setLastResult({
+          number: result.number,
+          color: result.color,
+          winnings: winnings,
+          netProfit: netProfit,
+          bets: [...bets]
+        });
+
+        // Nettoyage
+        bettingManager.clearBets();
+        setActiveBets([]);
+        isSpinningRef.current = false;
+        
+        // IMPORTANT: Reset isSpinning après l'animation
+        setTimeout(() => {
+          setIsSpinning(false);
+          setCanBet(true);
+          setTimeUntilSpin(15);
+        }, 1000); // Petit délai après l'affichage du résultat
+        
+        spinTimeoutRef.current = null;
+      }, 5000); // Attendre la fin de l'animation de la roue
+    }, 1000); // 1 secondes après la fin du timer
   };
 
   // Récompense publicitaire
@@ -248,18 +299,16 @@ function App() {
 
     setMessage('📺 Chargement de la publicité...');
     
-    adSystem.loadAd().then(() => {
-      return adSystem.showAd();
-    }).then(() => {
+    // Simulation de publicité
+    setTimeout(() => {
       const reward = wallet.claimAdReward();
       setBalance(wallet.getBalance());
       setCanWatchAd(false);
       localStorage.setItem('lastAdWatch', Date.now().toString());
       setMessage(`🎬 Merci ! Vous avez reçu ${reward} jetons !`);
+      setShowAdButton(false); // Cacher le bouton après utilisation
       setTimeout(() => setCanWatchAd(true), 300000);
-    }).catch(error => {
-      setMessage(`❌ ${error.message}`);
-    });
+    }, 2000);
   };
 
   // Fonction utilitaire pour vérifier si un pari est actif
@@ -284,6 +333,210 @@ function App() {
       'THIRD_DOZEN': '3ème 12'
     };
     return labels[value] || value;
+  };
+
+  // Fonction pour gérer le clic sur le solde
+  const handleBalanceClick = () => {
+    setShowAdButton(!showAdButton);
+  };
+
+  // Composant Modal pour les Achievements
+  const AchievementsModal = () => {
+    if (!showAchievementsModal) return null;
+
+    return (
+      <div className="modal-overlay" onClick={() => setShowAchievementsModal(false)}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h3>🏆 Achievements</h3>
+            <button 
+              className="modal-close"
+              onClick={() => setShowAchievementsModal(false)}
+            >
+              ✕
+            </button>
+          </div>
+          <div className="achievements-list">
+            {allAchievements.map((achievement, index) => (
+              <div 
+                key={achievement.id} 
+                className={`achievement-item ${achievement.unlocked ? 'unlocked' : 'locked'}`}
+              >
+                <div className="achievement-icon">
+                  {achievement.unlocked ? achievement.icon : '🔒'}
+                </div>
+                <div className="achievement-info">
+                  <h4>{achievement.name}</h4>
+                  <p>{achievement.description}</p>
+                  <span className="achievement-category">{achievement.category}</span>
+                </div>
+                <div className="achievement-status">
+                  {achievement.unlocked ? '✅ Débloqué' : '🔒 Verrouillé'}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Composant Modal pour l'Historique
+  const HistoryModal = () => {
+    if (!showHistoryModal) return null;
+
+    const totalProfit = gameHistory.reduce((sum, game) => sum + game.netProfit, 0);
+    const totalGames = gameHistory.length;
+    const wins = gameHistory.filter(game => game.netProfit > 0).length;
+    const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) : 0;
+
+    return (
+      <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h3>📊 Historique des Parties</h3>
+            <button 
+              className="modal-close"
+              onClick={() => setShowHistoryModal(false)}
+            >
+              ✕
+            </button>
+          </div>
+          
+          {/* Statistiques résumées */}
+          <div className="history-stats" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '1rem',
+            marginBottom: '1.5rem',
+            padding: '1rem',
+            background: 'rgba(255,255,255,0.05)',
+            borderRadius: '10px'
+          }}>
+            <div className="stat-item">
+              <div style={{ fontSize: '0.8rem', color: '#ffd700' }}>Total Parties</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{totalGames}</div>
+            </div>
+            <div className="stat-item">
+              <div style={{ fontSize: '0.8rem', color: '#ffd700' }}>Taux de Victoire</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{winRate}%</div>
+            </div>
+            <div className="stat-item">
+              <div style={{ fontSize: '0.8rem', color: '#ffd700' }}>Profit/Perte Total</div>
+              <div style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: 'bold',
+                color: totalProfit >= 0 ? '#28a745' : '#dc143c'
+              }}>
+                {totalProfit >= 0 ? '+' : ''}{totalProfit} 🪙
+              </div>
+            </div>
+            <div className="stat-item">
+              <div style={{ fontSize: '0.8rem', color: '#ffd700' }}>Victoires</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#28a745' }}>{wins}</div>
+            </div>
+          </div>
+
+          {/* Liste des parties */}
+          <div className="history-list" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            {gameHistory.length === 0 ? (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '2rem', 
+                color: '#888',
+                fontStyle: 'italic'
+              }}>
+                Aucune partie enregistrée
+              </div>
+            ) : (
+              gameHistory.map((game) => (
+                <div 
+                  key={game.id}
+                  className="history-item"
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0.75rem',
+                    marginBottom: '0.5rem',
+                    background: 'rgba(255,255,255,0.05)',
+                    borderRadius: '8px',
+                    borderLeft: `4px solid ${
+                      game.netProfit > 0 ? '#28a745' : 
+                      game.netProfit < 0 ? '#dc143c' : '#ffd700'
+                    }`
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div 
+                      className={`result-chip ${game.color}`}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 'bold',
+                        color: 'white',
+                        background: game.color === 'red' ? '#dc143c' : 
+                                  game.color === 'black' ? '#000000' : '#28a745'
+                      }}
+                    >
+                      {game.number}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>
+                        {game.timestamp}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: '#aaa' }}>
+                        Mise: {game.totalBet} 🪙
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ 
+                      fontSize: '1.1rem', 
+                      fontWeight: 'bold',
+                      color: game.netProfit > 0 ? '#28a745' : 
+                            game.netProfit < 0 ? '#dc143c' : '#ffd700'
+                    }}>
+                      {game.netProfit > 0 ? '+' : ''}{game.netProfit} 🪙
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#aaa' }}>
+                      Gains: {game.winnings} 🪙
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Bouton pour effacer l'historique */}
+          {gameHistory.length > 0 && (
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+              <button
+                className="clear-bets-btn"
+                onClick={() => {
+                  setGameHistory([]);
+                  localStorage.removeItem('gameHistory');
+                }}
+                style={{
+                  background: 'rgba(220, 20, 60, 0.3)',
+                  border: '1px solid #dc143c',
+                  color: '#ffffff',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '5px',
+                  cursor: 'pointer'
+                }}
+              >
+                🗑️ Effacer l'historique
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const renderBettingTable = (activeBets) => {
@@ -340,21 +593,40 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <div className="header-right">
-          <div className="balance-display">
-            <span className="balance-amount">{balance} 🪙</span>
-          </div>
-          <div className="profit-loss-display">
-            <span className="profit-loss-amount" style={{ color: totalProfitLoss >= 0 ? 'green' : 'red' }}>
-              P&L: {totalProfitLoss} 🪙
-            </span>
-          </div>
           <button 
-            className="reward-btn ad-btn"
-            onClick={handleWatchAd}
-            disabled={!canWatchAd}
+            className="achievements-btn"
+            onClick={() => setShowAchievementsModal(true)}
           >
-            📺 Regarder une pub (50 🪙)
+            🏆 Achievements
           </button>
+          <button 
+            className="history-btn"
+            onClick={() => setShowHistoryModal(true)}
+          >
+            📊 Historique
+          </button>
+          
+          {/* Nouveau bouton de solde avec menu déroulant */}
+          <div className="balance-menu-container">
+            <button 
+              className="balance-btn"
+              onClick={handleBalanceClick}
+            >
+              <span className="balance-amount">{balance} 🪙</span>
+            </button>
+            
+            {/* Bouton "Regarder une pub" qui apparaît en dessous */}
+            {showAdButton && (
+              <button 
+                className="ad-btn dropdown"
+                onClick={handleWatchAd}
+                disabled={!canWatchAd}
+              >
+                📺 Regarder une pub (50 🪙)
+              </button>
+            )}
+          </div>
+
           <button 
             className="test-btn"
             onClick={() => {
@@ -375,6 +647,13 @@ function App() {
             result={spinResult}
             winningNumber={spinResult?.number}
           />
+          
+          {/* Message d'information déplacé ici sous la roulette */}
+          {message && (
+            <div className="message-box">
+              {message}
+            </div>
+          )}
         </div>
 
         <div className="betting-section">
@@ -419,22 +698,47 @@ function App() {
           </div>
 
           {renderBettingTable(activeBets)}
-        </div>
 
-        {achievements.length > 0 && (
-          <div className="achievements-section">
-            <h3>🏆 Succès débloqués</h3>
-            <div className="achievements-list">
-              {achievements.slice(-3).map((achievement, index) => (
-                <div key={index} className="achievement-item">
-                  <strong>{achievement.name}</strong>
-                  <p>{achievement.description}</p>
-                </div>
-              ))}
+          {/* Affichage des paris actifs */}
+          {activeBets.length > 0 && (
+            <div className="active-bets">
+              <h3>Paris actifs</h3>
+              <div className="bets-list">
+                {activeBets.map(bet => (
+                  <div key={bet.id} className="bet-item">
+                    <div className="bet-info">
+                      {formatBetDisplay(bet.type, bet.value)} - {bet.amount} 🪙
+                    </div>
+                    <button 
+                      className="remove-bet-btn"
+                      onClick={() => handleRemoveBet(bet.id)}
+                      disabled={isSpinning}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="bets-summary">
+                <p>Total: {bettingManager.getTotalBetAmount()} 🪙</p>
+                <button 
+                  className="clear-bets-btn"
+                  onClick={handleClearBets}
+                  disabled={isSpinning}
+                >
+                  Effacer tous
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </main>
+
+      {/* Modal des Achievements */}
+      <AchievementsModal />
+
+      {/* Modal Historique */}
+      <HistoryModal />
     </div>
   );
 }

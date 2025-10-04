@@ -1,70 +1,109 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './RouletteWheel.css';
 
 const RouletteWheel = ({ isSpinning, result, winningNumber }) => {
   const [rotation, setRotation] = useState(0);
   const [displayNumber, setDisplayNumber] = useState(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const animationRef = useRef(null);
 
-  // Numéros de la roulette américaine dans l'ordre de la roue
   const wheelNumbers = [
     0, 28, 9, 26, 30, 11, 7, 20, 32, 17, 5, 22, 34, 15, 3, 24, 36, 13, 1,
     '00', 27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2
   ];
 
-  // Couleurs pour chaque numéro
   const getNumberColor = (num) => {
     if (num === 0 || num === '00') return 'green';
     const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
     return redNumbers.includes(num) ? 'red' : 'black';
   };
 
-  // Effet pour l'animation du spin
+  // Fonction pour calculer l'angle cible avec précision
+  const calculateTargetRotation = (targetNumber) => {
+    const targetIndex = wheelNumbers.indexOf(targetNumber);
+    if (targetIndex === -1) {
+      console.error('Numéro cible non trouvé:', targetNumber);
+      return 0;
+    }
+    
+    const degreesPerNumber = 360 / wheelNumbers.length;
+    // Position cible (en degrés)
+    const targetPosition = targetIndex * degreesPerNumber;
+    
+    // Au moins 2 tours complets + position cible ajustée
+    const minRotations = 2; // Minimum de tours complets
+    const extraRotations = minRotations * 360;
+    
+    // Ajustement pour que le numéro s'aligne avec l'indicateur
+    // L'indicateur est en haut, donc on soustrait la position cible
+    const finalRotation = extraRotations + (360 - targetPosition);
+    
+    console.log(`Target: ${targetNumber}, Index: ${targetIndex}, Final rotation: ${finalRotation}°`);
+    return finalRotation;
+  };
+
+  // Effet pour l'animation du spin - MODIFIÉ
   useEffect(() => {
-    if (isSpinning && result) {
-      // Cacher immédiatement l'ancien résultat quand un nouveau spin commence
+    if (result && !isAnimating) {
+      console.log('🚀 Démarrage de l\'animation pour le numéro:', result.number);
+      
+      // Réinitialiser l'affichage
       setDisplayNumber(null);
+      setIsAnimating(true);
       
-      // Calculer l'angle cible basé sur le numéro gagnant
-      const targetIndex = wheelNumbers.indexOf(result.number);
-      const degreesPerNumber = 360 / wheelNumbers.length;
-      const targetAngle = targetIndex * degreesPerNumber;
+      // Calculer la rotation cible
+      const targetRotation = calculateTargetRotation(result.number);
       
-      // Ajouter plusieurs rotations complètes pour l'effet
-      const extraRotations = 1440; // 4 tours complets
-      const finalRotation = extraRotations + (360 - targetAngle);
+      // Démarrer l'animation
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
       
-      setRotation(finalRotation);
+      // Commencer à 0 et animer vers la cible
+      setRotation(0);
       
-      // Afficher le numéro gagnant après l'animation (10 secondes)
+      // Petit délai pour s'assurer que le DOM est mis à jour
+      setTimeout(() => {
+        setRotation(targetRotation);
+      }, 50);
+      
+      // Afficher le résultat après l'animation
+      const animationDuration = 10000; // 5 secondes pour l'animation
       setTimeout(() => {
         setDisplayNumber(result.number);
-      }, 10000);
+        setIsAnimating(false);
+        console.log('✅ Animation terminée');
+      }, animationDuration);
     }
-  }, [isSpinning, result]);
+  }, [result]); // Supprimer isSpinning des dépendances
 
-  // N'afficher que displayNumber (qui sera null pendant le spin et le bon numéro après)
-  const currentNumber = displayNumber;
+  // Nettoyer l'animation lors du démontage
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="roulette-wheel-container">
       <div className="wheel-wrapper">
-        {/* Indicateur fixe (flèche pointant vers le haut) */}
         <div className="wheel-indicator">▼</div>
         
-        {/* La roue qui tourne */}
         <div 
-          className={`wheel ${isSpinning ? 'spinning' : ''}`}
+          className={`wheel ${isAnimating ? 'spinning' : ''}`}
           style={{ 
             transform: `rotate(${rotation}deg)`,
-            transition: isSpinning ? 'transform 10s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none'
+            transition: isAnimating 
+              ? 'transform 5s cubic-bezier(0.2, 0.8, 0.3, 1)'  // Courbe d'accélération/décélération plus fluide
+              : 'none'
           }}
         >
-          {/* Cercle central */}
           <div className="wheel-center">
             <div className="wheel-logo">🎰</div>
           </div>
           
-          {/* Segments de la roue */}
           {wheelNumbers.map((num, index) => {
             const angle = (360 / wheelNumbers.length) * index;
             const color = getNumberColor(num);
@@ -84,15 +123,6 @@ const RouletteWheel = ({ isSpinning, result, winningNumber }) => {
         </div>
       </div>
 
-      {/* Affichage du résultat */}
-      {currentNumber !== null && !isSpinning && (
-        <div className="result-display">
-          <div className={`result-bubble ${getNumberColor(currentNumber)}`}>
-            <span className="result-label">Résultat</span>
-            <span className="result-value">{currentNumber}</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

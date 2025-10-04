@@ -688,45 +688,15 @@ function App() {
 
           {/* Affichage des paris actifs */}
           {activeBets.length > 0 && (
-            <div className="active-bets">
-              <h3>Paris actifs</h3>
-              <div className="bets-list">
-                {activeBets.map(bet => (
-                  <div key={bet.id} className="bet-item">
-                    <div className="bet-info">
-                      {formatBetDisplay(bet.type, bet.value)} - {bet.amount} 🪙
-                    </div>
-                    <div className="bet-actions">
-                      <button 
-                        className="bet-action-btn"
-                        onClick={() => handleReduceBet(bet.type, bet.value, selectedAmount)}
-                        disabled={isSpinning || bet.amount < selectedAmount}
-                        title={`Retirer ${selectedAmount} jetons`}
-                      >
-                        -{selectedAmount}
-                      </button>
-                      <button 
-                        className="remove-bet-btn"
-                        onClick={() => handleRemoveBet(bet.id)}
-                        disabled={isSpinning}
-                        title="Retirer complètement"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="bets-summary">
-                <p>Total: {bettingManager.getTotalBetAmount()} 🪙</p>
-                <button 
-                  className="clear-bets-btn"
-                  onClick={handleClearBets}
-                  disabled={isSpinning}
-                >
-                  Effacer tous
-                </button>
-              </div>
+            <div className="bets-summary">
+              <p>Total: {bettingManager.getTotalBetAmount()} 🪙</p>
+              <button 
+                className="clear-bets-btn"
+                onClick={handleClearBets}
+                disabled={isSpinning}
+              >
+                Effacer tous
+              </button>
             </div>
           )}
         </div>

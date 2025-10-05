@@ -765,9 +765,6 @@ function App() {
             🧪 Test +10k
           </button>
         </div>
-      </header>
-
-      <main className="app-main">
         <div className="xp-bar-container">
           <div className="xp-bar-info">
             <span>Niveau: {playerLevel}</span>
@@ -780,6 +777,9 @@ function App() {
             ></div>
           </div>
         </div>
+      </header>
+
+      <main className="app-main">
         <div className="wheel-section">
           <RouletteWheel 
             isSpinning={isSpinning}

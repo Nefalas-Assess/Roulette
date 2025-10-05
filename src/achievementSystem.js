@@ -1,5 +1,7 @@
 export class AchievementSystem {
-    constructor() {
+    constructor(wallet, onAchievementUnlocked = () => {}) {
+        this.wallet = wallet;
+        this.onAchievementUnlocked = onAchievementUnlocked;
         this.achievements = this.initializeAchievements();
         this.unlockedAchievements = this.loadUnlockedAchievements();
         this.gameStats = this.loadGameStats();
@@ -186,7 +188,7 @@ export class AchievementSystem {
             category: 'winnings',
             condition: (gameResult, stats) => {
                 const initialBalance = 1000; // Balance de départ
-                return wallet.getBalance() >= initialBalance * 2;
+                return this.wallet.getBalance() >= initialBalance * 2;
             }
         },
         {
@@ -196,8 +198,11 @@ export class AchievementSystem {
             icon: '💎',
             category: 'winnings',
             condition: (gameResult, stats) => {
-                const totalProfit = gameHistory.reduce((sum, game) => sum + game.netProfit, 0);
-                return totalProfit >= 1000;
+                // La condition originale dépendait de gameHistory qui n'est pas accessible ici.
+                // Pour l'instant, cette achievement sera désactivée ou nécessitera une refonte.
+                // const totalProfit = gameHistory.reduce((sum, game) => sum + game.netProfit, 0);
+                // return totalProfit >= 1000;
+                return false; // Désactivé temporairement
             }
         },
         {
@@ -206,7 +211,7 @@ export class AchievementSystem {
             description: 'Cumuler 1 000 000 de crédits',
             icon: '🤑',
             category: 'winnings',
-            condition: (gameResult, stats) => wallet.getBalance() >= 1000000
+            condition: (gameResult, stats) => this.wallet.getBalance() >= 1000000
         },
         {
             id: 'all_in_win',
@@ -216,7 +221,7 @@ export class AchievementSystem {
             category: 'winnings',
             condition: (gameResult, stats) => {
                 // Cette condition nécessiterait de tracker si le dernier pari était un all-in
-                return gameResult.totalBetAmount >= wallet.getBalance() * 0.95 && gameResult.profit > 0;
+                return gameResult.totalBetAmount >= this.wallet.getBalance() * 0.95 && gameResult.profit > 0;
             }
         },
         {
@@ -228,7 +233,7 @@ export class AchievementSystem {
             condition: (gameResult, stats) => {
                 // Nécessite de tracker le solde minimum atteint
                 const minBalance = parseInt(localStorage.getItem('minBalance') || '1000');
-                return minBalance <= 0 && wallet.getBalance() > 0;
+                return minBalance <= 0 && this.wallet.getBalance() > 0;
             }
         },
 
@@ -359,6 +364,7 @@ export class AchievementSystem {
         this.unlockedAchievements.add(achievementId);
         this.saveUnlockedAchievements();
         console.log(`Achievement unlocked: ${achievementId}`);
+        this.onAchievementUnlocked(achievementId);
         // Optionally, trigger a notification or visual feedback
     }
 

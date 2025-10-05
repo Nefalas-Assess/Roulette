@@ -186,6 +186,10 @@ export class BettingManager {
         return this.currentBets.reduce((total, bet) => total + bet.amount, 0);
     }
 
+    checkWin(bet, winningNumber) {
+        return bet.numbers.includes(winningNumber);
+    }
+
     calculateTotalWinnings(winningNumber) {
         let totalWinnings = 0;
         this.currentBets.forEach(bet => {

@@ -1,20 +1,35 @@
 import { useState, useEffect, useRef } from 'react';
+import { XpSystem } from './xpSystem';
 import RouletteWheel from './RouletteWheel';
 import { spinWheel } from './rouletteLogic';
 import { WalletSystem } from './walletSystem';
 import { BettingManager, BET_TYPES, BET_AMOUNTS, BETTING_AREAS, RED_NUMBERS, BLACK_NUMBERS } from './bettingSystem';
 import { AchievementSystem } from './achievementSystem';
 import { AdSystem } from './adSystem';
+import { DailyQuestSystem } from './dailyQuestSystem';
+import { WeeklyQuestSystem } from './weeklyQuestSystem';
 import HistoryModal from './HistoryModal';
 import AchievementsModal from './AchievementsModal';
+import QuestsModal from './QuestsModal';
 import './App.css';
 
 function App() {
   // Initialisation des systèmes
   const [wallet] = useState(() => new WalletSystem());
   const [bettingManager] = useState(() => new BettingManager());
-  const [achievementSystem] = useState(() => new AchievementSystem());
+  const [achievementSystem] = useState(() => new AchievementSystem(wallet, (achievementId) => {
+    weeklyQuestSystem.recordAchievementUnlocked();
+    setWeeklyQuests(weeklyQuestSystem.getQuests());
+  }));
   const [adSystem] = useState(() => new AdSystem());
+  const [dailyQuestSystem] = useState(() => new DailyQuestSystem());
+  const [weeklyQuestSystem] = useState(() => new WeeklyQuestSystem());
+  const [xpSystem] = useState(() => new XpSystem());
+
+  // États XP
+  const [playerXp, setPlayerXp] = useState(xpSystem.getXp());
+  const [playerLevel, setPlayerLevel] = useState(xpSystem.getLevel());
+  const [xpForNextLevel, setXpForNextLevel] = useState(xpSystem.getXpForNextLevel(xpSystem.getLevel()));
   const [totalProfitLoss, setTotalProfitLoss] = useState(() => {
     const savedProfitLoss = localStorage.getItem('totalProfitLoss');
     return savedProfitLoss ? parseInt(savedProfitLoss) : 0;
@@ -43,8 +58,13 @@ function App() {
   const [showAchievementsModal, setShowAchievementsModal] = useState(false);
   const [allAchievements, setAllAchievements] = useState([]);
 
+  // États des quêtes quotidiennes
+  const [dailyQuests, setDailyQuests] = useState([]);
+  const [weeklyQuests, setWeeklyQuests] = useState([]);
+
   // Nouveaux états pour l'historique
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showQuestsModal, setShowQuestsModal] = useState(false);
   const [gameHistory, setGameHistory] = useState(() => {
     const savedHistory = localStorage.getItem('gameHistory');
     return savedHistory ? JSON.parse(savedHistory) : [];
@@ -62,7 +82,21 @@ function App() {
     setBalance(wallet.getBalance());
     checkTimers();
     loadAllAchievements();
-  }, [wallet]);
+    setDailyQuests(dailyQuestSystem.getQuests());
+    setWeeklyQuests(weeklyQuestSystem.getQuests());
+
+    // Vérifier le bonus de connexion quotidienne
+    const lastLoginDate = localStorage.getItem("lastLoginDate");
+    const today = new Date().toDateString();
+    if (lastLoginDate !== today) {
+      localStorage.setItem("lastLoginDate", today);
+      xpSystem.addXp(10); // +10 XP bonus journalier
+      setPlayerXp(xpSystem.getXp());
+      setPlayerLevel(xpSystem.getLevel());
+      setXpForNextLevel(xpSystem.getXpForNextLevel(xpSystem.getLevel()));
+      setMessage("🎉 Bonus de connexion quotidienne : +10 XP !");
+    }
+  }, [wallet, dailyQuestSystem, xpSystem]);
 
   // Charger tous les achievements
   const loadAllAchievements = () => {
@@ -300,6 +334,53 @@ function App() {
         const winnings = bettingManager.calculateTotalWinnings(result.number);
         const netProfit = winnings - totalBet;
 
+        // Calcul et ajout de l'XP
+        let xpGained = 0;
+        const bets = bettingManager.getBets();
+        let hasRiskyBet = false;
+        let hasSimpleBet = false;
+        let totalSimpleBetAmount = 0;
+        let totalRiskyBetAmount = 0;
+        let totalMediumBetAmount = 0;
+
+        bets.forEach(bet => {
+          const betAmount = bet.amount;
+          const betType = bet.type;
+          const isWinningBet = bettingManager.checkWin(bet, result.number);
+
+          if (betType === 'RED' || betType === 'BLACK' || betType === 'EVEN' || betType === 'ODD' || betType === 'LOW' || betType === 'HIGH') {
+            xpGained += Math.floor(betAmount / 10) * 1; // +1 XP par 10 crédits misés
+            hasSimpleBet = true;
+            totalSimpleBetAmount += betAmount;
+            if (isWinningBet) {
+              xpGained += 5; // +5 XP supplémentaires pour gain sur mise simple
+            }
+          } else if (betType === 'DOZEN' || betType === 'COLUMN') {
+            xpGained += Math.floor(betAmount / 10) * 3; // +3 XP par 10 crédits misés
+            totalMediumBetAmount += betAmount;
+          } else if (betType === 'STRAIGHT_UP' || betType === 'SPLIT' || betType === 'STREET' || betType === 'CORNER') {
+            xpGained += Math.floor(betAmount / 10) * 5; // +5 XP par 10 crédits misés
+            hasRiskyBet = true;
+            totalRiskyBetAmount += betAmount;
+            if (isWinningBet) {
+              xpGained += 25; // +25 XP supplémentaires pour gain sur mise risquée
+            }
+          }
+        });
+
+        // Bonus gros gain (x10 ou plus la mise)
+        if (winnings >= totalBet * 10 && totalBet > 0) {
+          xpGained += 50;
+        }
+
+        xpSystem.addXp(xpGained);
+        setPlayerXp(xpSystem.getXp());
+        setPlayerLevel(xpSystem.getLevel());
+        setXpForNextLevel(xpSystem.getXpForNextLevel(xpSystem.getLevel()));
+
+        console.log(`[LOG] XP gagné ce tour: ${xpGained}`);
+        console.log(`[LOG] XP total: ${xpSystem.getXp()}, Niveau: ${xpSystem.getLevel()}`);
+
         // AJOUTER LES GAINS SI IL Y EN A
         if (winnings > 0) {
           wallet.addBalance(winnings);
@@ -347,6 +428,49 @@ function App() {
           netProfit: netProfit,
           bets: [...bets]
         });
+
+        // Mettre à jour la progression des quêtes quotidiennes
+        dailyQuestSystem.recordRoundPlayed();
+        dailyQuestSystem.recordWinnings(winnings);
+        bets.forEach(bet => {
+          if (bet.type === 'STRAIGHT_UP') {
+            dailyQuestSystem.recordStraightUpBet();
+          }
+          if (bet.type === 'DOZEN') {
+            dailyQuestSystem.recordDozensBet(bet.type);
+          }
+          // Pour la quête de série de victoires sur Rouge/Noir
+          if ((bet.type === 'RED' || bet.type === 'BLACK') && bettingManager.checkWin(bet, result.number)) {
+            dailyQuestSystem.recordRedBlackWin(true);
+          } else if ((bet.type === 'RED' || bet.type === 'BLACK') && !bettingManager.checkWin(bet, result.number)) {
+            dailyQuestSystem.recordRedBlackWin(false);
+          }
+        });
+        dailyQuestSystem.recordSession();
+        setDailyQuests(dailyQuestSystem.getQuests());
+
+        // Mettre à jour la progression des quêtes hebdomadaires
+        weeklyQuestSystem.recordBetAmount(totalBet);
+        weeklyQuestSystem.recordCumulativeWinnings(winnings);
+        if (netProfit > 0) {
+          // Pour la quête de série de victoires
+          const currentWinStreak = (parseInt(localStorage.getItem('winStreak')) || 0) + 1;
+          localStorage.setItem('winStreak', currentWinStreak.toString());
+          weeklyQuestSystem.recordWinStreak(currentWinStreak);
+        } else {
+          localStorage.setItem('winStreak', '0'); // Réinitialiser la série en cas de perte
+        }
+
+        bets.forEach(bet => {
+          weeklyQuestSystem.recordUniqueBetType(bet.type);
+          if (bet.type === 'STRAIGHT_UP' && bettingManager.checkWin(bet, result.number)) {
+            weeklyQuestSystem.recordStraightUpWin();
+          }
+        });
+        // La quête de connexion quotidienne est gérée dans le useEffect initial
+        // La quête d'achievements est gérée par le système d'achievements
+        setWeeklyQuests(weeklyQuestSystem.getQuests());
+    setWeeklyQuests(weeklyQuestSystem.getQuests());
 
         // Nettoyage
         bettingManager.clearBets();
@@ -602,6 +726,12 @@ function App() {
           >
             📊 Historique
           </button>
+          <button 
+            className="quests-btn"
+            onClick={() => setShowQuestsModal(true)}
+          >
+            📜 Quêtes
+          </button>
           
           {/* Nouveau bouton de solde avec menu déroulant */}
           <div className="balance-menu-container">
@@ -638,6 +768,18 @@ function App() {
       </header>
 
       <main className="app-main">
+        <div className="xp-bar-container">
+          <div className="xp-bar-info">
+            <span>Niveau: {playerLevel}</span>
+            <span>XP: {playerXp} / {xpForNextLevel}</span>
+          </div>
+          <div className="xp-bar-progress">
+            <div 
+              className="xp-bar-fill"
+              style={{ width: `${(playerXp / xpForNextLevel) * 100}%` }}
+            ></div>
+          </div>
+        </div>
         <div className="wheel-section">
           <RouletteWheel 
             isSpinning={isSpinning}
@@ -755,6 +897,23 @@ function App() {
         setShowHistoryModal={setShowHistoryModal}
         gameHistory={gameHistory}
         setGameHistory={setGameHistory}
+      />
+
+      {/* Modal Quêtes */}
+      <QuestsModal
+        showQuestsModal={showQuestsModal}
+        setShowQuestsModal={setShowQuestsModal}
+        dailyQuests={dailyQuests}
+        weeklyQuests={weeklyQuests}
+        dailyQuestSystem={dailyQuestSystem}
+        weeklyQuestSystem={weeklyQuestSystem}
+        xpSystem={xpSystem}
+        setPlayerXp={setPlayerXp}
+        setPlayerLevel={setPlayerLevel}
+        setXpForNextLevel={setXpForNextLevel}
+        wallet={wallet}
+        setBalance={setBalance}
+        setMessage={setMessage}
       />
     </div>
   );

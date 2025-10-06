@@ -739,7 +739,7 @@ function App() {
               className="balance-btn"
               onClick={handleBalanceClick}
             >
-              <span className="balance-amount">{balance} 🪙</span>
+              <span className="balance-amount">{balance} <img src="/coin.png" alt="coin" className="coin-icon" /></span>
             </button>
             
             {/* Bouton "Regarder une pub" qui apparaît en dessous */}
@@ -822,7 +822,7 @@ function App() {
                   className={`amount-btn ${selectedAmount === amount ? 'selected' : ''}`}
                   onClick={() => setSelectedAmount(amount)}
                 >
-                  {amount} 🪙
+                  {amount} <img src="/coin.png" alt="coin" className="coin-icon" />
                 </button>
               ))}
               {/* NOUVEAUX BOUTONS DE POURCENTAGE - VERSION CORRIGÉE */}

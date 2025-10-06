@@ -760,6 +760,10 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
   display: flex;
   align-items: center;
   gap: 1rem;
+  position: relative;
+  flex-wrap: wrap;
+  justify-content: center;
+
 }
 
 .test-btn {
@@ -846,8 +850,6 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
     width: auto;
   }
 }
-
-
 
 .header-right {
   display: flex;
@@ -1044,12 +1046,6 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
     text-align: center;
   }
   
-  .header-right {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
-  }
-  
   .achievements-btn {
     order: -1;
     width: 100%;
@@ -1132,14 +1128,6 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* Ajustement du header pour le nouveau layout */
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  position: relative;
 }
 
 .history-btn {

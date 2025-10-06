@@ -3,7 +3,7 @@ import { XpSystem } from './xpSystem';
 import RouletteWheel from './RouletteWheel';
 import { spinWheel } from './rouletteLogic';
 import { WalletSystem } from './walletSystem';
-import { BettingManager, BET_TYPES, BET_AMOUNTS, BETTING_AREAS, RED_NUMBERS, BLACK_NUMBERS } from './bettingSystem';
+import { BettingManager, BET_AMOUNTS, RED_NUMBERS, BLACK_NUMBERS } from './bettingSystem';
 import { AchievementSystem } from './achievementSystem';
 import { AdSystem } from './adSystem';
 import { DailyQuestSystem } from './dailyQuestSystem';

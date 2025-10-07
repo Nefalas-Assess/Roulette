@@ -101,7 +101,7 @@ const RouletteWheel = ({ isSpinning, result, winningNumber }) => {
           }}
         >
           <div className="wheel-center">
-            <div className="wheel-logo">🎰</div>
+            <div className="wheel-icon"><img src="/wheel.png" alt="wheel" className="wheel-icon" /></div>
           </div>
           
           {wheelNumbers.map((num, index) => {

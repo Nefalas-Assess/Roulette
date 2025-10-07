@@ -626,10 +626,10 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
     position: absolute;
     top: -5px;
     right: -5px;
-    width: 20px;
+    width: auto;
     height: 20px;
     background-color: #ffd700;
-    border-radius: 50%;
+    border-radius: 0%;
     border: 2px solid #1a1a2e;
     display: flex;
     align-items: center;
@@ -1219,8 +1219,8 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
 
 /* Style pour l'icône de pièce */
 .coin-icon {
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
   vertical-align: middle;
   margin-left: 4px;
   display: inline-block;
@@ -1229,18 +1229,18 @@ height: 40px; /* Ajuster la hauteur pour correspondre aux cellules numériques *
 
 /* Ajustement pour les boutons de montant */
 .amount-btn .coin-icon {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
 }
 
 /* Ajustement pour le solde dans le header */
 .balance-amount .coin-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 /* Ajustement pour le timer */
 .timer-note .coin-icon {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }

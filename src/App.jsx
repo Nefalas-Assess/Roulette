@@ -749,7 +749,7 @@ function App() {
                 onClick={handleWatchAd}
                 // PLUS de disabled={!canWatchAd}
               >
-                📺 Regarder une pub (500 🪙)
+                📺 Regarder une pub (500 <img src="/coin.png" alt="coin" className="coin-icon" />)
               </button>
             )}
           </div>
@@ -759,7 +759,6 @@ function App() {
             onClick={() => {
               wallet.addBalance(10000);
               setBalance(wallet.getBalance());
-              setMessage('🧪 Test: 10000 jetons ajoutés !');
             }}
           >
             🧪 Test +10k
@@ -834,7 +833,7 @@ function App() {
                 }}
                 disabled={balance === 0 || isSpinning}
               >
-                10%
+                10% ({Math.max(1, Math.floor(balance * 0.1))})
               </button>
               <button
                 className="amount-btn percentage-btn"
@@ -844,7 +843,7 @@ function App() {
                 }}
                 disabled={balance === 0 || isSpinning}
               >
-                25%
+                25% ({Math.max(1, Math.floor(balance * 0.25))})
               </button>
               <button
                 className="amount-btn percentage-btn"
@@ -854,7 +853,7 @@ function App() {
                 }}
                 disabled={balance === 0 || isSpinning}
               >
-                50%
+                50% ({Math.max(1, Math.floor(balance * 0.5))})
               </button>
               <button
                 className="amount-btn percentage-btn all-in-btn"
@@ -871,7 +870,7 @@ function App() {
           {/* Affichage des paris actifs */}
           {activeBets.length > 0 && (
             <div className="bets-summary">
-              <p>Total: {bettingManager.getTotalBetAmount()} 🪙</p>
+              <p>Total: {bettingManager.getTotalBetAmount()} <img src="/coin.png" alt="coin" className="coin-icon" /></p>
               <button 
                 className="clear-bets-btn"
                 onClick={handleClearBets}

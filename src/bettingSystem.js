@@ -89,11 +89,6 @@ export class BettingManager {
         if (typeof amount !== 'number' || amount <= 0 || !Number.isInteger(amount)) {
             throw new Error(`Montant de pari invalide: ${amount}`);
         }
-        
-        // Optionnel : Vérifier que le montant n'est pas trop élevé (par exemple, max 10 000)
-        if (amount > 10000) {
-            throw new Error(`Montant de pari trop élevé: ${amount} (maximum: 10 000)`);
-        }
 
         let numbersCovered = [];
         if (type === 'STRAIGHT_UP') {
